@@ -2,7 +2,8 @@
 - name: get-config
   gather_facts: false
   hosts: all
-
+  environment:
+    ANSIBLE_HOST_KEY_CHECKING: 'False'
   tasks:
     - name: Get config for IOS devices
       cisco.iosxr.iosxr_command:
