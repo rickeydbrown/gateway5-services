@@ -1,7 +1,7 @@
 ---
 - name: get-config
   gather_facts: false
-  hosts: 10.102.156.5
+  hosts: all
 
   tasks:
     - name: Get config for IOS devices
