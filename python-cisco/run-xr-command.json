@@ -1,0 +1,10 @@
+{
+  "$id": "xr-run-command",
+  "$schema": "https://json-schema.org/draft/202012/schema",
+  "type": "object",
+  "properties": {
+    "cmd": {
+      "type": "string"
+    }
+  }
+}
