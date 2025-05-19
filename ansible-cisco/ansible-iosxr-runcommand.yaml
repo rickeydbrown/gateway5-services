@@ -1,7 +1,7 @@
 ---
 - name: get-config
   gather_facts: false
-  hosts: all
+  hosts: ios_device
   tasks:
     - name: Get config for IOS devices
       cisco.iosxr.iosxr_command:
