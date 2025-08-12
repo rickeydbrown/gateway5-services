@@ -76,10 +76,10 @@ Default commands by device type:
 ''' + '\n'.join([f'  {k}: {v}' for k, v in DEVICE_COMMANDS.items()])
     )
     
-    parser.add_argument('host', help='Device IP address or hostname')
-    parser.add_argument('username', help='Username for device login')
-    parser.add_argument('password', help='Password for device login')
-    parser.add_argument('device_type', choices=list(DEVICE_TYPES.keys()),
+    parser.add_argument('--host', required=True, help='Device IP address or hostname')
+    parser.add_argument('--username', required=True, help='Username for device login')
+    parser.add_argument('--password', required=True, help='Password for device login')
+    parser.add_argument('--device_type', required=True, choices=list(DEVICE_TYPES.keys()),
                        help='Device type')
     parser.add_argument('-c', '--command', help='Custom command to run instead of default')
     parser.add_argument('-p', '--port', type=int, default=22, help='SSH port (default: 22)')
