@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Itential Device Get Config Input Schema",
+  "description": "JSON schema for input parameters to the itential-device-getconfig.py script",
+  "type": "object",
+  "properties": {
+    "host": {
+      "type": "string",
+      "description": "Device IP address or hostname",
+      "examples": ["192.168.1.1", "router.example.com"]
+    },
+    "username": {
+      "type": "string",
+      "description": "Username for device login",
+      "minLength": 1
+    },
+    "password": {
+      "type": "string",
+      "description": "Password for device login",
+      "minLength": 1
+    },
+    "device_type": {
+      "type": "string",
+      "description": "Device type - determines the netmiko device driver to use",
+      "enum": [
+        "aruba",
+        "asa", 
+        "bigip",
+        "eos",
+        "ios",
+        "iosxr",
+        "junos",
+        "nxos",
+        "sros"
+      ]
+    },
+    "command": {
+      "type": "string",
+      "description": "Custom command to run instead of default configuration command",
+      "examples": ["show version", "show interfaces", "show ip route"]
+    },
+    "port": {
+      "type": "integer",
+      "description": "SSH port number",
+      "default": 22,
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "secret": {
+      "type": "string",
+      "description": "Enable secret for privileged mode (primarily for Cisco devices)"
+    }
+  },
+  "required": [
+    "host",
+    "username", 
+    "password",
+    "device_type"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "host": "192.168.1.1",
+      "username": "admin",
+      "password": "password123",
+      "device_type": "ios"
+    },
+    {
+      "host": "switch.example.com",
+      "username": "netadmin", 
+      "password": "secret",
+      "device_type": "nxos",
+      "command": "show version",
+      "port": 2222,
+      "secret": "enable_secret"
+    }
+  ]
+}
