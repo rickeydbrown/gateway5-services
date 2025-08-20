@@ -1,40 +1,15 @@
 {
   "schema": {
     "properties": {
-      "aARG61": {
-        "description": "arg6",
-        "type": "string"
-      },
-      "bARG51": {
-        "description": "arg5",
-        "type": "string"
-      },
-      "cARG41": {
-        "description": "arg4",
-        "type": "string"
-      },
-      "dARG31": {
-        "description": "arg3",
-        "type": "string"
-      },
-      "eARG21": {
-        "description": "arg2",
-        "type": "string"
-      },
-      "fARG11": {
-        "description": "arg1",
+      "DEVICE_TYPES": {
+        "description": "Device OS",
         "type": "string"
       }
     },
     "script_argument_order": [
-      "fARG1",
-      "eARG2",
-      "dARG3",
-      "cARG4",
-      "bARG5",
-      "aARG6"
+      "DEVICE_TYPES"
     ],
-    "title": "test_arg_order.py",
+    "title": "itential-device-getconfig.py",
     "type": "object"
   }
 }
