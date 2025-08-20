@@ -1,36 +1,40 @@
 {
-  "properties": {
-    "aARG6": {
-      "description": "arg6",
-      "type": "string"
+  "schema": {
+    "properties": {
+      "aARG6": {
+        "description": "arg6",
+        "type": "string"
+      },
+      "bARG5": {
+        "description": "arg5",
+        "type": "string"
+      },
+      "cARG4": {
+        "description": "arg4",
+        "type": "string"
+      },
+      "dARG3": {
+        "description": "arg3",
+        "type": "string"
+      },
+      "eARG2": {
+        "description": "arg2",
+        "type": "string"
+      },
+      "fARG1": {
+        "description": "arg1",
+        "type": "string"
+      }
     },
-    "bARG5": {
-      "description": "arg5",
-      "type": "string"
-    },
-    "cARG4": {
-      "description": "arg4",
-      "type": "string"
-    },
-    "dARG3": {
-      "description": "arg3",
-      "type": "string"
-    },
-    "eARG2": {
-      "description": "arg2",
-      "type": "string"
-    },
-    "fARG1": {
-      "description": "arg1",
-      "type": "string"
-    }
-  },
-  "script_argument_order": [
-    "fARG1",
-    "eARG2",
-    "dARG3",
-    "cARG4",
-    "bARG5",
-    "aARG6"
-  ]
+    "script_argument_order": [
+      "fARG1",
+      "eARG2",
+      "dARG3",
+      "cARG4",
+      "bARG5",
+      "aARG6"
+    ],
+    "title": "test_arg_order.py",
+    "type": "object"
+  }
 }
