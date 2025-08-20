@@ -1,27 +1,27 @@
 {
   "schema": {
     "properties": {
-      "aARG6": {
+      "aARG61": {
         "description": "arg6",
         "type": "string"
       },
-      "bARG5": {
+      "bARG51": {
         "description": "arg5",
         "type": "string"
       },
-      "cARG4": {
+      "cARG41": {
         "description": "arg4",
         "type": "string"
       },
-      "dARG3": {
+      "dARG31": {
         "description": "arg3",
         "type": "string"
       },
-      "eARG2": {
+      "eARG21": {
         "description": "arg2",
         "type": "string"
       },
-      "fARG1": {
+      "fARG11": {
         "description": "arg1",
         "type": "string"
       }
