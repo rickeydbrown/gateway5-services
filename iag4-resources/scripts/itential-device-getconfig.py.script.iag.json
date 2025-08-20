@@ -4,10 +4,15 @@
       "DEVICE_TYPES": {
         "description": "Device OS",
         "type": "string"
+      },
+      "DEVICE_COMMAND": {
+        "description": "Device Command",
+        "type": "string"
       }
     },
     "script_argument_order": [
-      "DEVICE_TYPES"
+      "DEVICE_TYPES",
+      "DEVICE_COMMAND"
     ],
     "title": "itential-device-getconfig.py",
     "type": "object"
