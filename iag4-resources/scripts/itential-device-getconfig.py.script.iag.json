@@ -8,6 +8,10 @@
       "DEVICE_COMMAND": {
         "description": "Device Command",
         "type": "string"
+      },
+      "SAPTARSHI": {
+        "description": "Saptarshi Command",
+        "type": "string"
       }
     },
     "script_argument_order": [
