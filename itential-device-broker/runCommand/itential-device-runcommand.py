@@ -3,7 +3,6 @@
 import sys
 import json
 import argparse
-import select
 from netmiko import ConnectHandler
 from netmiko.exceptions import NetmikoTimeoutException, NetmikoAuthenticationException
 
@@ -56,11 +55,44 @@ def run_device_command(host, username, password, device_type, command, port=22, 
 
 
 def main():
-    # Check if stdin has data
-    has_stdin_data = select.select([sys.stdin], [], [], 0.0)[0]
+    # Check if we have command-line arguments (legacy mode) or stdin (new mode)
+    # If we have recognized arguments, use legacy mode
+    if len(sys.argv) > 1 and any(arg.startswith('--') for arg in sys.argv[1:]):
+        # Legacy command-line argument mode
+        parser = argparse.ArgumentParser(
+            description='Run a command on a network device using netmiko',
+            formatter_class=argparse.RawDescriptionHelpFormatter
+        )
 
-    # If stdin has data, use new stdin-based array mode
-    if has_stdin_data:
+        parser.add_argument('--host', required=True, help='Device IP address or hostname')
+        parser.add_argument('--username', required=True, help='Username for device login')
+        parser.add_argument('--password', required=True, help='Password for device login')
+        parser.add_argument('--device_type', required=True, choices=list(DEVICE_TYPES.keys()),
+                           help='Device type')
+        parser.add_argument('--command', required=True, help='Command to run on the device')
+        parser.add_argument('--port', type=int, default=22, help='SSH port (default: 22)')
+        parser.add_argument('--secret', help='Enable secret for privileged mode (Cisco devices)')
+
+        # Ignore unknown arguments (like clusterId, ostype, etc.)
+        args, _ = parser.parse_known_args()
+
+        try:
+            output = run_device_command(
+                args.host,
+                args.username,
+                args.password,
+                args.device_type,
+                args.command,
+                args.port,
+                args.secret
+            )
+            print(output)
+        except Exception as e:
+            print(f"Error: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    else:
+        # New stdin-based array mode
         try:
             input_data = sys.stdin.read()
 
@@ -137,40 +169,6 @@ def main():
             sys.exit(1)
         except Exception as e:
             print(json.dumps({"error": str(e)}, indent=2), file=sys.stderr)
-            sys.exit(1)
-
-    else:
-        # Use legacy command-line argument mode
-        parser = argparse.ArgumentParser(
-            description='Run a command on a network device using netmiko',
-            formatter_class=argparse.RawDescriptionHelpFormatter
-        )
-
-        parser.add_argument('--host', required=True, help='Device IP address or hostname')
-        parser.add_argument('--username', required=True, help='Username for device login')
-        parser.add_argument('--password', required=True, help='Password for device login')
-        parser.add_argument('--device_type', required=True, choices=list(DEVICE_TYPES.keys()),
-                           help='Device type')
-        parser.add_argument('--command', required=True, help='Command to run on the device')
-        parser.add_argument('--port', type=int, default=22, help='SSH port (default: 22)')
-        parser.add_argument('--secret', help='Enable secret for privileged mode (Cisco devices)')
-
-        # Ignore unknown arguments (like clusterId, ostype, etc.)
-        args, unknown = parser.parse_known_args()
-
-        try:
-            output = run_device_command(
-                args.host,
-                args.username,
-                args.password,
-                args.device_type,
-                args.command,
-                args.port,
-                args.secret
-            )
-            print(output)
-        except Exception as e:
-            print(f"Error: {e}", file=sys.stderr)
             sys.exit(1)
 
 
