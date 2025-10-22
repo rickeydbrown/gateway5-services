@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Itential Device Run Command Input Schema",
+  "description": "JSON schema for input parameters to the itential-device-runcommand.py script",
+  "type": "object",
+  "properties": {
+    "devices": {
+      "type": "array",
+      "description": "Array of devices to run the command on",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "Device IP address or hostname",
+            "examples": ["192.168.1.1", "router.example.com"]
+          },
+          "username": {
+            "type": "string",
+            "description": "Username for device login",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "description": "Password for device login",
+            "minLength": 1
+          },
+          "device_type": {
+            "type": "string",
+            "description": "Device type - determines the netmiko device driver to use",
+            "enum": [
+              "aruba",
+              "asa",
+              "bigip",
+              "eos",
+              "ios",
+              "iosxr",
+              "junos",
+              "nxos",
+              "sros"
+            ]
+          },
+          "port": {
+            "type": "integer",
+            "description": "SSH port number",
+            "default": 22,
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "secret": {
+            "type": "string",
+            "description": "Enable secret for privileged mode (primarily for Cisco devices)"
+          }
+        },
+        "required": [
+          "host",
+          "username",
+          "password",
+          "device_type"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "command": {
+      "type": "string",
+      "description": "Command to run on all devices",
+      "minLength": 1,
+      "examples": ["show version", "show interfaces", "show ip route", "show configuration"]
+    }
+  },
+  "required": [
+    "devices",
+    "command"
+  ],
+  "additionalProperties": true,
+  "examples": [
+    {
+      "devices": [
+        {
+          "host": "192.168.1.1",
+          "username": "admin",
+          "password": "password123",
+          "device_type": "ios"
+        },
+        {
+          "host": "192.168.1.2",
+          "username": "admin",
+          "password": "password123",
+          "device_type": "ios",
+          "port": 2222
+        }
+      ],
+      "command": "show version"
+    },
+    {
+      "devices": [
+        {
+          "host": "switch.example.com",
+          "username": "netadmin",
+          "password": "secret",
+          "device_type": "nxos",
+          "port": 2222,
+          "secret": "enable_secret"
+        },
+        {
+          "host": "router.example.com",
+          "username": "admin",
+          "password": "password123",
+          "device_type": "junos"
+        }
+      ],
+      "command": "show interfaces"
+    }
+  ]
+}

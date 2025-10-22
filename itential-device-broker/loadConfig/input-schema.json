@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Itential Device Load Config Input Schema",
+  "description": "JSON schema for input parameters to the itential-device-loadconfig.py script",
+  "type": "object",
+  "properties": {
+    "host": {
+      "type": "string",
+      "description": "Device IP address or hostname",
+      "examples": ["192.168.1.1", "router.example.com"]
+    },
+    "username": {
+      "type": "string",
+      "description": "Username for device login",
+      "minLength": 1
+    },
+    "password": {
+      "type": "string",
+      "description": "Password for device login",
+      "minLength": 1
+    },
+    "device_type": {
+      "type": "string",
+      "description": "Device type - determines the netmiko device driver to use",
+      "enum": [
+        "aruba",
+        "asa",
+        "bigip",
+        "eos",
+        "ios",
+        "iosxr",
+        "junos",
+        "nxos",
+        "sros"
+      ]
+    },
+    "commands": {
+      "type": "string",
+      "description": "Configuration commands to load (semicolon-separated for multiple commands)",
+      "minLength": 1,
+      "examples": [
+        "interface gi0/1;description Test Port;no shutdown",
+        "logging buffered 20000;no logging console",
+        "interface GigabitEthernet0/0/0;ip address 10.1.1.1 255.255.255.0"
+      ]
+    },
+    "file": {
+      "type": "string",
+      "description": "Path to file containing configuration commands (one per line, alternative to commands parameter)"
+    },
+    "config_commands": {
+      "type": "array",
+      "description": "Array of configuration commands to load (alternative to commands string)",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "examples": [
+        ["interface gi0/1", "description Test Port", "no shutdown"],
+        ["logging buffered 20000", "no logging console"]
+      ]
+    },
+    "port": {
+      "type": "integer",
+      "description": "SSH port number",
+      "default": 22,
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "secret": {
+      "type": "string",
+      "description": "Enable secret for privileged mode (primarily for Cisco devices)"
+    },
+    "save_config": {
+      "type": "boolean",
+      "description": "Whether to save the configuration after loading (equivalent to copy run start)",
+      "default": false
+    }
+  },
+  "required": [
+    "host",
+    "username",
+    "password",
+    "device_type"
+  ],
+  "oneOf": [
+    {
+      "required": ["commands"]
+    },
+    {
+      "required": ["file"]
+    },
+    {
+      "required": ["config_commands"]
+    }
+  ],
+  "additionalProperties": true,
+  "examples": [
+    {
+      "host": "192.168.1.1",
+      "username": "admin",
+      "password": "password123",
+      "device_type": "ios",
+      "commands": "interface gi0/1;description Uplink Port;no shutdown"
+    },
+    {
+      "host": "switch.example.com",
+      "username": "netadmin",
+      "password": "secret",
+      "device_type": "nxos",
+      "config_commands": [
+        "interface Ethernet1/1",
+        "description Test Interface",
+        "no shutdown"
+      ],
+      "save_config": true,
+      "secret": "enable_secret"
+    },
+    {
+      "host": "router.example.com",
+      "username": "admin",
+      "password": "password123",
+      "device_type": "junos",
+      "file": "/path/to/config.txt"
+    }
+  ]
+}

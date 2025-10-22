@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Return Input Schema",
+  "description": "JSON schema for input parameters to the return-input.py script - simply returns the input data",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": true,
+  "examples": [
+    {
+      "message": "Hello, World!"
+    },
+    {
+      "data": {
+        "name": "test",
+        "value": 123,
+        "nested": {
+          "key": "value"
+        }
+      }
+    },
+    {
+      "array": [1, 2, 3, 4, 5]
+    }
+  ]
+}
