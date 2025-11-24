@@ -196,10 +196,19 @@ The "ostype" field can be used instead of "device_type".
             print("Error: No input provided on stdin", file=sys.stderr)
             sys.exit(1)
 
-        devices = json.loads(stdin_data)
+        input_data = json.loads(stdin_data)
+
+        # Handle both array format and object with "inventory_nodes" key
+        if isinstance(input_data, list):
+            devices = input_data
+        elif isinstance(input_data, dict) and 'inventory_nodes' in input_data:
+            devices = input_data['inventory_nodes']
+        else:
+            print("Error: Input must be a JSON array of devices or an object with an 'inventory_nodes' key", file=sys.stderr)
+            sys.exit(1)
 
         if not isinstance(devices, list):
-            print("Error: Input must be a JSON array of devices", file=sys.stderr)
+            print("Error: Devices must be a JSON array", file=sys.stderr)
             sys.exit(1)
 
         if len(devices) == 0:
