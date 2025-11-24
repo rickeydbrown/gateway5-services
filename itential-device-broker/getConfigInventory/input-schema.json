@@ -1,0 +1,147 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Itential Device Get Config Inventory Input Schema",
+  "description": "JSON schema for input parameters to the itential-device-getconfiginventory.py script",
+  "type": "object",
+  "properties": {
+    "devices": {
+      "type": "array",
+      "description": "Array of devices to execute commands on",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique name or identifier for the device",
+            "minLength": 1
+          },
+          "attributes": {
+            "type": "object",
+            "description": "Device connection parameters",
+            "properties": {
+              "host": {
+                "type": "string",
+                "description": "Device IP address or hostname",
+                "examples": ["192.168.1.1", "router.example.com"]
+              },
+              "username": {
+                "type": "string",
+                "description": "Username for device login",
+                "minLength": 1
+              },
+              "password": {
+                "type": "string",
+                "description": "Password for device login",
+                "minLength": 1
+              },
+              "device_type": {
+                "type": "string",
+                "description": "Device type - determines the netmiko device driver to use",
+                "enum": [
+                  "aruba",
+                  "asa",
+                  "bigip",
+                  "eos",
+                  "ios",
+                  "iosxr",
+                  "junos",
+                  "nxos",
+                  "sros"
+                ]
+              },
+              "ostype": {
+                "type": "string",
+                "description": "Alternative to device_type - OS type of the device",
+                "enum": [
+                  "aruba",
+                  "asa",
+                  "bigip",
+                  "eos",
+                  "ios",
+                  "iosxr",
+                  "junos",
+                  "nxos",
+                  "sros"
+                ]
+              },
+              "port": {
+                "type": "integer",
+                "description": "SSH port number",
+                "default": 22,
+                "minimum": 1,
+                "maximum": 65535
+              },
+              "secret": {
+                "type": "string",
+                "description": "Enable secret for privileged mode (primarily for Cisco devices)"
+              },
+              "clusterId": {
+                "type": "string",
+                "description": "Optional cluster identifier for device grouping"
+              }
+            },
+            "required": [
+              "host",
+              "username",
+              "password"
+            ],
+            "oneOf": [
+              {
+                "required": ["device_type"]
+              },
+              {
+                "required": ["ostype"]
+              }
+            ],
+            "additionalProperties": true
+          }
+        },
+        "required": ["name", "attributes"],
+        "additionalProperties": false
+      }
+    },
+    "command": {
+      "type": "string",
+      "description": "Custom command to run on all devices instead of default configuration command",
+      "examples": ["show version", "show interfaces", "show ip route"]
+    },
+    "workers": {
+      "type": "integer",
+      "description": "Maximum number of parallel connections",
+      "default": 10,
+      "minimum": 1,
+      "maximum": 100
+    }
+  },
+  "required": ["devices"],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "devices": [
+        {
+          "name": "core-router-1",
+          "attributes": {
+            "host": "10.102.156.5",
+            "username": "iag",
+            "password": "iagpass",
+            "device_type": "iosxr",
+            "port": 22,
+            "clusterId": "rb_cluster_219"
+          }
+        },
+        {
+          "name": "core-router-2",
+          "attributes": {
+            "host": "10.102.156.6",
+            "username": "iag",
+            "password": "iagpass",
+            "ostype": "iosxr",
+            "port": 22
+          }
+        }
+      ],
+      "command": "show version"
+    }
+  ]
+}
