@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from netmiko import ConnectHandler
 from netmiko.exceptions import NetmikoTimeoutException, NetmikoAuthenticationException
@@ -33,7 +34,7 @@ DEVICE_TYPES = {
 }
 
 
-def get_device_config(device_name, attributes, command=None):
+def get_device_config(device_name, attributes, command=None, delay=0):
     """
     Execute a command on a single device.
 
@@ -41,10 +42,16 @@ def get_device_config(device_name, attributes, command=None):
         device_name: Name of the device
         attributes: Dictionary containing device connection parameters
         command: Command to execute (optional, uses default if not provided)
+        delay: Delay in seconds before connecting (for testing same device)
 
     Returns:
         Dictionary with device name, success status, and output or error
     """
+    # TESTING ONLY: Add delay to avoid hitting same device too quickly
+    # TODO: Remove delay parameter in production
+    if delay > 0:
+        time.sleep(delay)
+
     try:
         # Extract parameters from attributes
         host = attributes.get('host')
@@ -116,7 +123,7 @@ def get_device_config(device_name, attributes, command=None):
         }
 
 
-def process_devices(devices, command=None, max_workers=10):
+def process_devices(devices, command=None, max_workers=10, delay=0):
     """
     Process multiple devices in parallel.
 
@@ -124,6 +131,7 @@ def process_devices(devices, command=None, max_workers=10):
         devices: List of device dictionaries with 'name' and 'attributes'
         command: Command to execute on all devices
         max_workers: Maximum number of parallel connections
+        delay: Delay in seconds between connection attempts (for testing)
 
     Returns:
         List of results for all devices
@@ -131,11 +139,13 @@ def process_devices(devices, command=None, max_workers=10):
     results = []
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        # Submit all tasks
-        future_to_device = {
-            executor.submit(get_device_config, device['name'], device['attributes'], command): device['name']
-            for device in devices
-        }
+        # Submit all tasks with staggered delays
+        future_to_device = {}
+        for i, device in enumerate(devices):
+            # Apply incremental delay for testing multiple connections to same device
+            device_delay = delay * i if delay > 0 else 0
+            future = executor.submit(get_device_config, device['name'], device['attributes'], command, device_delay)
+            future_to_device[future] = device['name']
 
         # Collect results as they complete
         for future in as_completed(future_to_device):
@@ -186,6 +196,8 @@ The "ostype" field can be used instead of "device_type".
     parser.add_argument('-c', '--command', help='Custom command to run on all devices (uses default if not provided)')
     parser.add_argument('-w', '--workers', type=int, default=10,
                        help='Maximum number of parallel connections (default: 10)')
+    parser.add_argument('-d', '--delay', type=float, default=0,
+                       help='TESTING ONLY: Delay in seconds between connection attempts (default: 0, remove in production)')
 
     args = parser.parse_args()
 
@@ -228,7 +240,7 @@ The "ostype" field can be used instead of "device_type".
                 sys.exit(1)
 
         # Process all devices
-        results = process_devices(devices, args.command, args.workers)
+        results = process_devices(devices, args.command, args.workers, args.delay)
 
         # Output results as JSON
         print(json.dumps(results, indent=2))
