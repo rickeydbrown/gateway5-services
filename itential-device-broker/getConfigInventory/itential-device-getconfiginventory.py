@@ -242,12 +242,21 @@ The "ostype" field can be used instead of "device_type".
         # Process all devices
         results = process_devices(devices, args.command, args.workers, args.delay)
 
-        # Output results as JSON
-        print(json.dumps(results, indent=2))
-
-        # Exit with error code if any device failed
-        if any(not result['success'] for result in results):
-            sys.exit(1)
+        # For single device, output just the command output (like getConfig)
+        if len(devices) == 1:
+            result = results[0]
+            if result['success']:
+                print(result['output'])
+                sys.exit(0)
+            else:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+        else:
+            # For multiple devices, output results as JSON
+            print(json.dumps(results, indent=2))
+            # Exit with error code if any device failed
+            if any(not result['success'] for result in results):
+                sys.exit(1)
 
     except json.JSONDecodeError as e:
         print(f"Error: Invalid JSON input - {str(e)}", file=sys.stderr)
