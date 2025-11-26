@@ -61,6 +61,9 @@ def get_device_config(device_name, attributes, command=None, delay=0):
         port = attributes.get('port', 22)
         secret = attributes.get('secret')
 
+        # Command priority: 1) device attribute, 2) CLI argument, 3) default
+        device_command = attributes.get('command') or attributes.get('cmd')
+
         # Validate required parameters
         if not all([host, username, password, device_type]):
             return {
@@ -78,7 +81,9 @@ def get_device_config(device_name, attributes, command=None, delay=0):
 
         netmiko_device_type = DEVICE_TYPES[device_type]
         default_command = DEVICE_COMMANDS[device_type]
-        command_to_run = command if command else default_command
+
+        # Priority order: device-specific command > global command > default
+        command_to_run = device_command or command or default_command
 
         device = {
             'device_type': netmiko_device_type,
