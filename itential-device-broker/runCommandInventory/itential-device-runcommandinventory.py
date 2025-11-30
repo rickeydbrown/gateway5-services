@@ -290,7 +290,7 @@ Input format (stdin):
         if len(devices) == 1:
             result = results[0]
             if result['success']:
-                print(result['output'], end='')
+                print(result['output'])
                 sys.exit(0)
             else:
                 print(f"Error: {result['error']}", file=sys.stderr)
