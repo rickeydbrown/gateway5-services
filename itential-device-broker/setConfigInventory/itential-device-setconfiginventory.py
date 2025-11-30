@@ -387,14 +387,14 @@ Input format (stdin):
         if len(devices) == 1:
             result = results[0]
             if result['success']:
-                print(json.dumps(result['changes'], indent=2))
+                print(json.dumps(result['changes']))
                 sys.exit(0)
             else:
                 print(f"Error: {result['error']}", file=sys.stderr)
                 sys.exit(1)
         else:
             # For multiple devices, output full results as JSON
-            print(json.dumps(results, indent=2))
+            print(json.dumps(results))
             # Exit with error code if any device failed
             if any(not result['success'] for result in results):
                 sys.exit(1)
