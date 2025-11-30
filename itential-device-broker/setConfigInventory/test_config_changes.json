@@ -1,0 +1,7 @@
+[
+  {
+    "parents": ["interface Loopback100"],
+    "old": "",
+    "new": "description ***TEST LOOPBACK from setConfigInventory***"
+  }
+]

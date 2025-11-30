@@ -1,0 +1,17 @@
+[
+  {
+    "parents": ["interface Loopback100"],
+    "old": "",
+    "new": "description First Test Change"
+  },
+  {
+    "parents": ["interface Loopback101"],
+    "old": "",
+    "new": "description Second Test Change"
+  },
+  {
+    "parents": ["interface Loopback102"],
+    "old": "shutdown",
+    "new": ""
+  }
+]

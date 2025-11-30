@@ -1,0 +1,263 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Itential Device Set Config Inventory Input Schema",
+  "description": "JSON schema for input parameters to the itential-device-setconfiginventory.py script",
+  "type": "object",
+  "properties": {
+    "devices": {
+      "type": "array",
+      "description": "Array of devices to apply configuration changes to",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique name or identifier for the device",
+            "minLength": 1
+          },
+          "attributes": {
+            "type": "object",
+            "description": "Device connection parameters",
+            "properties": {
+              "host": {
+                "type": "string",
+                "description": "Device IP address or hostname",
+                "examples": ["192.168.1.1", "router.example.com"]
+              },
+              "username": {
+                "type": "string",
+                "description": "Username for device login",
+                "minLength": 1
+              },
+              "password": {
+                "type": "string",
+                "description": "Password for device login",
+                "minLength": 1
+              },
+              "device_type": {
+                "type": "string",
+                "description": "Device type - determines the netmiko device driver to use",
+                "enum": [
+                  "aruba",
+                  "asa",
+                  "bigip",
+                  "eos",
+                  "ios",
+                  "iosxr",
+                  "junos",
+                  "nxos",
+                  "sros"
+                ]
+              },
+              "ostype": {
+                "type": "string",
+                "description": "Alternative to device_type - OS type of the device",
+                "enum": [
+                  "aruba",
+                  "asa",
+                  "bigip",
+                  "eos",
+                  "ios",
+                  "iosxr",
+                  "junos",
+                  "nxos",
+                  "sros"
+                ]
+              },
+              "port": {
+                "type": "integer",
+                "description": "SSH port number",
+                "default": 22,
+                "minimum": 1,
+                "maximum": 65535
+              },
+              "secret": {
+                "type": "string",
+                "description": "Enable secret for privileged mode (primarily for Cisco devices)"
+              },
+              "clusterId": {
+                "type": "string",
+                "description": "Optional cluster identifier for device grouping"
+              },
+              "options": {
+                "type": "object",
+                "description": "Device-specific Netmiko connection options (highest priority)",
+                "properties": {
+                  "session_log": {
+                    "type": "string",
+                    "description": "Path to log all session output"
+                  },
+                  "global_delay_factor": {
+                    "type": "number",
+                    "description": "Multiplier for all delays",
+                    "minimum": 1
+                  },
+                  "timeout": {
+                    "type": "integer",
+                    "description": "Global timeout for read operations in seconds",
+                    "minimum": 1
+                  },
+                  "conn_timeout": {
+                    "type": "integer",
+                    "description": "Connection timeout in seconds",
+                    "minimum": 1
+                  },
+                  "auth_timeout": {
+                    "type": "integer",
+                    "description": "Authentication timeout in seconds",
+                    "minimum": 1
+                  },
+                  "banner_timeout": {
+                    "type": "integer",
+                    "description": "Banner timeout in seconds",
+                    "minimum": 1
+                  },
+                  "fast_cli": {
+                    "type": "boolean",
+                    "description": "Enable fast CLI mode"
+                  },
+                  "verbose": {
+                    "type": "boolean",
+                    "description": "Print connection debug info"
+                  }
+                },
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "host",
+              "username",
+              "password"
+            ],
+            "oneOf": [
+              {
+                "required": ["device_type"]
+              },
+              {
+                "required": ["ostype"]
+              }
+            ],
+            "additionalProperties": true
+          }
+        },
+        "required": ["name", "attributes"],
+        "additionalProperties": false
+      }
+    },
+    "config_changes": {
+      "type": "array",
+      "description": "Array of configuration changes to apply",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "parents": {
+            "type": "array",
+            "description": "Parent configuration context (e.g., ['interface Loopback 100'])",
+            "items": {
+              "type": "string"
+            }
+          },
+          "old": {
+            "type": "string",
+            "description": "Old configuration line to remove (empty string if adding new config)",
+            "default": ""
+          },
+          "new": {
+            "type": "string",
+            "description": "New configuration line to add (empty string if removing config)",
+            "default": ""
+          }
+        },
+        "required": ["parents"],
+        "additionalProperties": false
+      }
+    },
+    "options": {
+      "type": "object",
+      "description": "Global Netmiko connection options (medium priority, overrides defaults)",
+      "properties": {
+        "session_log": {
+          "type": "string",
+          "description": "Path to log all session output"
+        },
+        "global_delay_factor": {
+          "type": "number",
+          "description": "Multiplier for all delays",
+          "minimum": 1
+        },
+        "timeout": {
+          "type": "integer",
+          "description": "Global timeout for read operations in seconds",
+          "minimum": 1
+        },
+        "conn_timeout": {
+          "type": "integer",
+          "description": "Connection timeout in seconds",
+          "minimum": 1
+        },
+        "auth_timeout": {
+          "type": "integer",
+          "description": "Authentication timeout in seconds",
+          "minimum": 1
+        },
+        "banner_timeout": {
+          "type": "integer",
+          "description": "Banner timeout in seconds",
+          "minimum": 1
+        },
+        "fast_cli": {
+          "type": "boolean",
+          "description": "Enable fast CLI mode"
+        },
+        "verbose": {
+          "type": "boolean",
+          "description": "Print connection debug info"
+        }
+      },
+      "additionalProperties": true
+    },
+    "workers": {
+      "type": "integer",
+      "description": "Maximum number of parallel connections",
+      "default": 10,
+      "minimum": 1,
+      "maximum": 100
+    }
+  },
+  "required": ["devices", "config_changes"],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "devices": [
+        {
+          "name": "core-router-1",
+          "attributes": {
+            "host": "10.102.156.5",
+            "username": "iag",
+            "password": "iagpass",
+            "device_type": "iosxr",
+            "port": 22
+          }
+        }
+      ],
+      "config_changes": [
+        {
+          "parents": ["interface Loopback 100"],
+          "old": "",
+          "new": "description Test Loopback"
+        },
+        {
+          "parents": ["interface int2"],
+          "old": "description Old Description",
+          "new": ""
+        }
+      ],
+      "options": {
+        "global_delay_factor": 4,
+        "timeout": 180
+      }
+    }
+  ]
+}
