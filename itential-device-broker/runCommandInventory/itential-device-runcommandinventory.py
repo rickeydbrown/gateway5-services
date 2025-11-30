@@ -60,10 +60,6 @@ def run_device_command(device_name, attributes, command, options=None, delay=0):
         port = attributes.get('port', 22)
         secret = attributes.get('secret')
 
-        # Command priority: 1) device attribute, 2) parameter
-        device_command = attributes.get('command') or attributes.get('cmd')
-        command_to_run = device_command or command
-
         # Validate required parameters
         if not all([host, username, password, device_type]):
             return {
@@ -72,7 +68,7 @@ def run_device_command(device_name, attributes, command, options=None, delay=0):
                 'error': 'Missing required parameters (host, username, password, device_type/ostype)'
             }
 
-        if not command_to_run:
+        if not command:
             return {
                 'name': device_name,
                 'success': False,
@@ -112,7 +108,7 @@ def run_device_command(device_name, attributes, command, options=None, delay=0):
             if secret and netmiko_device_type in ['cisco_ios', 'cisco_nxos', 'cisco_asa']:
                 connection.enable()
 
-            output = connection.send_command(command_to_run)
+            output = connection.send_command(command)
 
             return {
                 'name': device_name,

@@ -53,12 +53,9 @@ cat test_input.json | ./itential-device-runcommandinventory.py \
 }
 ```
 
-## Command Priority
+## Command
 
-1. **Device-level command** (in `attributes.command` or `attributes.cmd`)
-2. **CLI command** (via `-c` or `--command` parameter)
-
-If a device has its own command in attributes, that takes priority over the global CLI command.
+The command must be specified via the `-c` or `--command` CLI parameter (required). Device-level commands in attributes are **not supported** - the same command is executed on all devices.
 
 ## Options Priority
 
