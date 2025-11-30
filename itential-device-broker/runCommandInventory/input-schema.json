@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "inventory_nodes": {
+      "type": "array",
+      "description": "Array of network devices to execute command on",
+      "items": {
+        "type": "object",
+        "required": ["name", "attributes"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Device name or identifier"
+          },
+          "attributes": {
+            "type": "object",
+            "required": ["host", "username", "password", "device_type"],
+            "properties": {
+              "host": {
+                "type": "string",
+                "description": "Device IP address or hostname"
+              },
+              "username": {
+                "type": "string",
+                "description": "Username for device authentication"
+              },
+              "password": {
+                "type": "string",
+                "description": "Password for device authentication"
+              },
+              "device_type": {
+                "type": "string",
+                "description": "Device type (any Netmiko-supported device type)"
+              },
+              "ostype": {
+                "type": "string",
+                "description": "Alternative field for device_type (any Netmiko-supported device type)"
+              },
+              "port": {
+                "type": "integer",
+                "description": "SSH port number",
+                "default": 22
+              },
+              "secret": {
+                "type": "string",
+                "description": "Enable secret for privileged mode (Cisco devices)"
+              },
+              "command": {
+                "type": "string",
+                "description": "Device-specific command (overrides global command)"
+              },
+              "cmd": {
+                "type": "string",
+                "description": "Alternative field for command"
+              },
+              "options": {
+                "type": "object",
+                "description": "Device-specific Netmiko connection options",
+                "properties": {
+                  "conn_timeout": {
+                    "type": "integer",
+                    "description": "Connection timeout in seconds"
+                  },
+                  "auth_timeout": {
+                    "type": "integer",
+                    "description": "Authentication timeout in seconds"
+                  },
+                  "banner_timeout": {
+                    "type": "integer",
+                    "description": "Banner timeout in seconds"
+                  },
+                  "timeout": {
+                    "type": "integer",
+                    "description": "General timeout in seconds"
+                  },
+                  "global_delay_factor": {
+                    "type": "integer",
+                    "description": "Delay factor for command execution"
+                  },
+                  "fast_cli": {
+                    "type": "boolean",
+                    "description": "Enable fast CLI mode"
+                  },
+                  "session_log": {
+                    "type": "string",
+                    "description": "Path to session log file"
+                  },
+                  "verbose": {
+                    "type": "boolean",
+                    "description": "Enable verbose output"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": ["inventory_nodes"]
+}

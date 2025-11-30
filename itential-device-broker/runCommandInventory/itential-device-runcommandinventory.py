@@ -32,83 +32,19 @@ DEFAULT_CONNECTION_PARAMS = {
 }
 
 
-def build_config_commands(config_changes, device_type):
+def run_device_command(device_name, attributes, command, options=None, delay=0):
     """
-    Build configuration commands from the config changes array.
-
-    Three scenarios:
-    1. Add new config: parents + new (old empty) → Just add new
-    2. Modify config: parents + old + new (both non-empty) → Just add new (overwrites old)
-    3. Delete config: parents + old, new empty → Remove old with 'no' (or 'delete' for Junos)
-
-    Args:
-        config_changes: List of config change objects with parents, old, new
-        device_type: Device type for vendor-specific command formatting
-
-    Returns:
-        List of command strings to send to device
-    """
-    commands = []
-
-    # Determine if this is a Junos device (uses 'set' and 'delete' commands)
-    is_junos = device_type in ('junos', 'juniper_junos')
-
-    for change in config_changes:
-        parents = change.get('parents', [])
-        old_value = change.get('old', '')
-        new_value = change.get('new', '')
-
-        if is_junos:
-            # Junos uses 'set' and 'delete' with full path in single command
-            parent_path = ' '.join(parents) if parents else ''
-
-            # If new exists, just set it (add or modify - overwrites old)
-            if new_value:
-                full_path = f"{parent_path} {new_value}".strip()
-                # Only add 'set' prefix if not already present
-                if not full_path.startswith('set '):
-                    commands.append(f"set {full_path}")
-                else:
-                    commands.append(full_path)
-            # If only old exists (delete scenario), delete it
-            elif old_value:
-                full_path = f"{parent_path} {old_value}".strip()
-                # Only add 'delete' prefix if not already present
-                if not full_path.startswith('delete '):
-                    commands.append(f"delete {full_path}")
-                else:
-                    commands.append(full_path)
-        else:
-            # Cisco-style devices: Enter parent context, use 'no' for deletions only
-            # Netmiko's send_config_set handles entering/exiting config mode automatically
-
-            # Enter parent context(s) only if parents exist
-            for parent in parents:
-                commands.append(parent)
-
-            # If new exists, just add it (add or modify - overwrites old)
-            if new_value:
-                commands.append(new_value)
-            # If only old exists (delete scenario), remove it with 'no' prefix
-            elif old_value:
-                commands.append(f"no {old_value}")
-
-    return commands
-
-
-def set_device_config(device_name, attributes, config_changes, options=None, delay=0):
-    """
-    Apply configuration changes to a single device.
+    Execute a command on a single device.
 
     Args:
         device_name: Name of the device
         attributes: Dictionary containing device connection parameters
-        config_changes: List of configuration changes to apply
+        command: Command to execute (required)
         options: Optional connection/session parameters to override defaults
         delay: Delay in seconds before connecting (for testing same device)
 
     Returns:
-        Dictionary with device name, success status, changes applied, and output or error
+        Dictionary with device name, success status, and output or error
     """
     # TESTING ONLY: Add delay to avoid hitting same device too quickly
     # TODO: Remove delay parameter in production
@@ -124,12 +60,23 @@ def set_device_config(device_name, attributes, config_changes, options=None, del
         port = attributes.get('port', 22)
         secret = attributes.get('secret')
 
+        # Command priority: 1) device attribute, 2) parameter
+        device_command = attributes.get('command') or attributes.get('cmd')
+        command_to_run = device_command or command
+
         # Validate required parameters
         if not all([host, username, password, device_type]):
             return {
                 'name': device_name,
                 'success': False,
                 'error': 'Missing required parameters (host, username, password, device_type/ostype)'
+            }
+
+        if not command_to_run:
+            return {
+                'name': device_name,
+                'success': False,
+                'error': 'Command is required'
             }
 
         # Use mapped device type if available, otherwise use incoming device_type directly
@@ -160,44 +107,18 @@ def set_device_config(device_name, attributes, config_changes, options=None, del
         if secret:
             device['secret'] = secret
 
-        # Build configuration commands (pass netmiko_device_type for vendor-specific formatting)
-        commands = build_config_commands(config_changes, netmiko_device_type)
-
-        if not commands:
-            return {
-                'name': device_name,
-                'success': False,
-                'error': 'No configuration commands to execute'
-            }
-
         with ConnectHandler(**device) as connection:
             # Enable privileged mode if needed
             if secret and netmiko_device_type in ['cisco_ios', 'cisco_nxos', 'cisco_asa']:
                 connection.enable()
 
-            # Send configuration commands
-            output = connection.send_config_set(commands)
-
-            # Manually commit for devices that require it
-            if netmiko_device_type in ['cisco_xr', 'juniper_junos']:
-                output += "\n" + connection.commit()
-
-            # Build result with applied changes
-            results = []
-            for change in config_changes:
-                results.append({
-                    'result': True,
-                    'parents': change.get('parents', []),
-                    'old': change.get('old', ''),
-                    'new': change.get('new', '')
-                })
+            output = connection.send_command(command_to_run)
 
             return {
                 'name': device_name,
                 'success': True,
-                'host': host,
-                'changes': results,
-                'output': output
+                'output': output,
+                'host': host
             }
 
     except NetmikoTimeoutException:
@@ -220,13 +141,13 @@ def set_device_config(device_name, attributes, config_changes, options=None, del
         }
 
 
-def process_devices(devices, config_changes, options=None, max_workers=10, delay=0):
+def process_devices(devices, command, options=None, max_workers=10, delay=0):
     """
     Process multiple devices in parallel.
 
     Args:
         devices: List of device dictionaries with 'name' and 'attributes'
-        config_changes: List of configuration changes to apply
+        command: Command to execute on all devices
         options: Optional connection parameters
         max_workers: Maximum number of parallel connections
         delay: Delay in seconds between connection attempts (for testing)
@@ -243,10 +164,10 @@ def process_devices(devices, config_changes, options=None, max_workers=10, delay
             # Apply incremental delay for testing multiple connections to same device
             device_delay = delay * i if delay > 0 else 0
             future = executor.submit(
-                set_device_config,
+                run_device_command,
                 device['name'],
                 device['attributes'],
-                config_changes,
+                command,
                 options,
                 device_delay
             )
@@ -270,25 +191,13 @@ def process_devices(devices, config_changes, options=None, max_workers=10, delay
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Apply configuration changes to multiple devices from inventory (stdin)',
+        description='Run commands on multiple devices from inventory (stdin)',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f'''
 Supported device types:
-{', '.join(DEVICE_TYPES.keys())}
-
-Config changes format (--config):
-[
-  {{
-    "parents": ["interface Loopback 100"],
-    "old": "",
-    "new": "description Test Loopback"
-  }},
-  {{
-    "parents": ["interface int2"],
-    "old": "description Old",
-    "new": ""
-  }}
-]
+Common mappings: {', '.join(DEVICE_TYPES.keys())}
+Note: Any Netmiko device type can be used. If not in the mapping above,
+      it will be passed directly to Netmiko (e.g., cisco_ios_telnet, hp_comware, etc.)
 
 Options format (--options):
 {{
@@ -317,8 +226,8 @@ Input format (stdin):
 '''
     )
 
-    parser.add_argument('--config', required=True,
-                       help='JSON array of configuration changes to apply')
+    parser.add_argument('-c', '--command', required=True,
+                       help='Command to run on all devices')
     parser.add_argument('--options',
                        help='JSON object with optional Netmiko connection parameters')
     parser.add_argument('-w', '--workers', type=int, default=10,
@@ -329,12 +238,6 @@ Input format (stdin):
     args = parser.parse_args()
 
     try:
-        # Parse config changes
-        config_changes = json.loads(args.config)
-        if not isinstance(config_changes, list):
-            print("Error: --config must be a JSON array", file=sys.stderr)
-            sys.exit(1)
-
         # Parse options if provided
         options = None
         if args.options:
@@ -381,19 +284,19 @@ Input format (stdin):
                 sys.exit(1)
 
         # Process all devices
-        results = process_devices(devices, config_changes, options, args.workers, args.delay)
+        results = process_devices(devices, args.command, options, args.workers, args.delay)
 
-        # For single device, output just the changes array
+        # For single device, output just the command output (like runCommand)
         if len(devices) == 1:
             result = results[0]
             if result['success']:
-                print(json.dumps(result['changes']), end='')
+                print(result['output'], end='')
                 sys.exit(0)
             else:
                 print(f"Error: {result['error']}", file=sys.stderr)
                 sys.exit(1)
         else:
-            # For multiple devices, output full results as JSON
+            # For multiple devices, output results as JSON
             print(json.dumps(results), end='')
             # Exit with error code if any device failed
             if any(not result['success'] for result in results):

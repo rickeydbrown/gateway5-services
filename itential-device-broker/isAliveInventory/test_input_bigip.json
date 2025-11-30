@@ -1,0 +1,14 @@
+{
+  "inventory_nodes": [
+    {
+      "name": "test-bigip-1",
+      "attributes": {
+        "host": "10.0.0.100",
+        "username": "admin",
+        "password": "password",
+        "device_type": "bigip",
+        "port": 22
+      }
+    }
+  ]
+}
