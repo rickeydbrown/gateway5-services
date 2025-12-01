@@ -88,14 +88,14 @@ try:
         # Apply default connection parameters
         device_params.update(DEFAULT_CONNECTION_PARAMS)
 
-        # Priority 1: Device-level options from attributes
+        # Priority 1: Global options from command line
+        if global_options:
+            device_params.update(global_options)
+
+        # Priority 2: Device-level options from attributes (highest priority)
         device_options = attributes.get('options', {})
         if device_options:
             device_params.update(device_options)
-
-        # Priority 2: Global options from command line
-        if global_options:
-            device_params.update(global_options)
 
         # Handle secret separately
         if secret:
