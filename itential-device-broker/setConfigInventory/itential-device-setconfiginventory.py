@@ -147,14 +147,14 @@ def set_device_config(device_name, attributes, config_changes, options=None, del
         # Apply default connection parameters
         device.update(DEFAULT_CONNECTION_PARAMS)
 
-        # Priority 1: Device-level options from attributes
+        # Priority 1: Global options from command line
+        if options:
+            device.update(options)
+
+        # Priority 2: Device-level options from attributes (highest priority)
         device_options = attributes.get('options', {})
         if device_options:
             device.update(device_options)
-
-        # Priority 2: Global options from command line
-        if options:
-            device.update(options)
 
         # Handle secret separately (could come from attributes or options)
         if secret:

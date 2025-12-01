@@ -72,15 +72,9 @@ def get_device_config(device_name, attributes, command=None, delay=0):
                 'error': 'Missing required parameters (host, username, password, device_type/ostype)'
             }
 
-        if device_type not in DEVICE_TYPES:
-            return {
-                'name': device_name,
-                'success': False,
-                'error': f"Unsupported device type: {device_type}"
-            }
-
-        netmiko_device_type = DEVICE_TYPES[device_type]
-        default_command = DEVICE_COMMANDS[device_type]
+        # Use mapped device type if available, otherwise use incoming device_type directly
+        netmiko_device_type = DEVICE_TYPES.get(device_type, device_type)
+        default_command = DEVICE_COMMANDS.get(device_type, 'show running-config')
 
         # Priority order: device-specific command > global command > default
         command_to_run = device_command or command or default_command

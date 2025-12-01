@@ -66,9 +66,9 @@ cat test_input.json | ./itential-device-isaliveinventory.py \
 
 ## Options Priority
 
-1. **Device-level options** (in `attributes.options`)
+1. **Device-level options** (in `attributes.options`) - **Highest priority**
 2. **Global options** (via `--options` CLI parameter)
-3. **Script defaults**
+3. **Script defaults** - Lowest priority
 
 ## Testing
 
