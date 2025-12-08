@@ -1,0 +1,14 @@
+{
+  "inventory_nodes": [
+    {
+      "name": "test-router-1",
+      "attributes": {
+        "host": "10.102.156.5",
+        "username": "iag",
+        "password": "iagpass",
+        "device_type": "iosxr",
+        "port": 22
+      }
+    }
+  ]
+}
