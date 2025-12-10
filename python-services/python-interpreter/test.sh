@@ -6,7 +6,7 @@ cd "$SCRIPT_DIR"
 echo "=================================================="
 echo "Test 1: Simple print statement"
 echo "=================================================="
-./python-interpreter.py --script "print('Hello, World!')"
+./python-interpreter.py --script 'print("Hello, World!")'
 
 echo ""
 echo "=================================================="
@@ -39,7 +39,7 @@ echo ""
 echo "=================================================="
 echo "Test 6: JSON format output (success)"
 echo "=================================================="
-./python-interpreter.py --script "print('Success!')" --format json
+./python-interpreter.py --script 'print("Success!")' --format json
 
 echo ""
 echo "=================================================="

@@ -43,13 +43,13 @@ The service includes JSON schemas for validation:
 ### Basic Usage
 
 ```bash
-./python-interpreter.py --script "print('Hello, World!')"
+./python-interpreter.py --script 'print("Hello, World!")'
 ```
 
 ### With JSON Output Format
 
 ```bash
-./python-interpreter.py --script "print('test')" --format json
+./python-interpreter.py --script 'print("test")' --format json
 ```
 
 ## Parameters
@@ -98,7 +98,7 @@ Output:
 ### Simple Print
 
 ```bash
-./python-interpreter.py --script "print('Hello, World!')"
+./python-interpreter.py --script 'print("Hello, World!")'
 ```
 
 ### Math Calculation
@@ -136,7 +136,7 @@ print(json.dumps(data))
 ### Error Handling
 
 ```bash
-./python-interpreter.py --script "raise ValueError('Test error')" --format json
+./python-interpreter.py --script 'raise ValueError("Test error")' --format json
 ```
 
 Output:

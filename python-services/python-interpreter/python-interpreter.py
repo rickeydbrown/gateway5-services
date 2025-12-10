@@ -68,7 +68,7 @@ def main():
     )
     parser.add_argument(
         '--script',
-        required=True,
+        required=False,
         help='Python code to execute'
     )
     parser.add_argument(
@@ -78,10 +78,22 @@ def main():
         help='Output format (default: text)'
     )
 
-    args = parser.parse_args()
+    # Use parse_known_args to capture remaining arguments
+    args, remaining = parser.parse_known_args()
+
+    # Build script from --script and any remaining arguments
+    if args.script:
+        # If there are remaining arguments, they're part of the script that got split
+        if remaining:
+            script_code = args.script + ' ' + ' '.join(remaining)
+        else:
+            script_code = args.script
+    else:
+        print("Error: --script argument is required", file=sys.stderr)
+        sys.exit(1)
 
     # Execute the script
-    result = execute_script(args.script)
+    result = execute_script(script_code)
 
     # Output results
     if args.format == 'json':
