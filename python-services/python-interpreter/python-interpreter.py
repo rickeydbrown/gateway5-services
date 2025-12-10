@@ -95,6 +95,14 @@ def main():
     # Preprocess script code to fix common issues from unquoted arguments
     import re
 
+    # Fix unquoted paths in function calls: os.listdir(/bin) -> os.listdir('/bin')
+    # Pattern: function(/path) -> function('/path')
+    script_code = re.sub(r'\((/[\w/.-]+)\)', r"('\1')", script_code)
+
+    # Fix unquoted string literals with escape sequences: (\n) -> ("\n")
+    # This handles cases like print(\n.join(...)) -> print("\n".join(...))
+    script_code = re.sub(r'\(\\([ntr])\b', r'("\\\1"', script_code)
+
     # Fix unquoted dictionary keys and string values: {key: value} -> {'key': 'value'}
     # This is complex, so we'll handle common patterns
 
