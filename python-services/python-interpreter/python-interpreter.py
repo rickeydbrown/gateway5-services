@@ -92,6 +92,17 @@ def main():
         print("Error: --script argument is required", file=sys.stderr)
         sys.exit(1)
 
+    # Preprocess script code to fix common issues from unquoted arguments
+    # Fix f-strings that lost their quotes: print(fResult: {var}) -> print(f'Result: {var}')
+    import re
+
+    # Pattern: print(f<text>: {<var>}) -> print(f'<text>: {<var>}')
+    # Match: print(f followed by text with colon and curly braces, no quotes
+    script_code = re.sub(r'print\(f([A-Za-z][^\'"\(\)]*:\s*\{[^}]+\})\)', r"print(f'\1')", script_code)
+
+    # Fix escaped quotes that might have been introduced
+    script_code = script_code.replace(r'\"', '"').replace(r"\'", "'")
+
     # Execute the script
     result = execute_script(script_code)
 
