@@ -96,9 +96,13 @@ def main():
     # Fix f-strings that lost their quotes: print(fResult: {var}) -> print(f'Result: {var}')
     import re
 
-    # Pattern: print(f<text>: {<var>}) -> print(f'<text>: {<var>}')
+    # Pattern 1: print(f<text>: {<var>}) -> print(f'<text>: {<var>}')
     # Match: print(f followed by text with colon and curly braces, no quotes
     script_code = re.sub(r'print\(f([A-Za-z][^\'"\(\)]*:\s*\{[^}]+\})\)', r"print(f'\1')", script_code)
+
+    # Pattern 2: print(f<text> {<var>}) -> print(f'<text> {<var>}') (without colon)
+    # Match: print(f followed by text with space and curly braces, no quotes or colon
+    script_code = re.sub(r'print\(f([A-Za-z][^\'"\(\):]*\s+\{[^}]+\})\)', r"print(f'\1')", script_code)
 
     # Fix escaped quotes that might have been introduced
     script_code = script_code.replace(r'\"', '"').replace(r"\'", "'")
