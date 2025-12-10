@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Python Interpreter Service Output Schema",
+  "description": "Schema for the JSON format output of the Python Interpreter service",
+  "type": "object",
+  "properties": {
+    "success": {
+      "type": "boolean",
+      "description": "Indicates whether the script executed successfully"
+    },
+    "stdout": {
+      "type": "string",
+      "description": "Standard output captured from the script execution"
+    },
+    "stderr": {
+      "type": "string",
+      "description": "Standard error output captured from the script execution"
+    },
+    "error": {
+      "type": ["string", "null"],
+      "description": "Error message if the script failed, null if successful"
+    },
+    "traceback": {
+      "type": "string",
+      "description": "Full Python traceback if the script failed (only present on error)"
+    }
+  },
+  "required": ["success", "stdout", "stderr", "error"],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "success": true,
+      "stdout": "Hello, World!\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "success": false,
+      "stdout": "",
+      "stderr": "",
+      "error": "division by zero",
+      "traceback": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nZeroDivisionError: division by zero\n"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "decorators": [
+        {
+      "name": "py-interpreter",
+      "schema": {
+        "$id": "root",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Python Interpreter Service Input Schema",
+        "description": "Schema for validating input parameters to the Python Interpreter service",
+        "type": "object",
+        "properties": {
+          "script": {
+            "type": "string",
+            "description": "Python code to execute",
+            "minLength": 1,
+            "examples": [
+              "print('Hello, World!')",
+              "import json; print(json.dumps({'key': 'value'}))",
+              "for i in range(3):\n    print(f'Iteration {i}')"
+            ]
+          },
+          "format": {
+            "type": "string",
+            "description": "Output format for the result",
+            "enum": ["json", "text"],
+            "default": "text"
+          }
+        },
+        "required": ["script"],
+        "additionalProperties": true,
+        "examples": [
+          {
+            "script": "print('Hello, World!')"
+          },
+          {
+            "script": "print('test')",
+            "format": "json"
+          },
+          {
+            "script": "import sys\nprint(f'Python {sys.version}')",
+            "format": "text"
+          }
+        ]
+      }
+    }
+  ],
+  "repositories": [
+ 
+  ],
+  "services": [
+   {
+      "name": "itential-python-interpreter",
+      "type": "python-script",
+      "description": "",
+      "filename": "python-interpreter.py",
+      "working-directory": "python-services/python-interpreter",
+      "repository": "gateway5-services",
+      "decorator": "py-interpreter",
+      "tags": [
+        "demo"
+      ],
+      "runtime": {}
+    }
+  ]
+}
