@@ -93,9 +93,23 @@ def main():
         sys.exit(1)
 
     # Preprocess script code to fix common issues from unquoted arguments
-    # Fix f-strings that lost their quotes: print(fResult: {var}) -> print(f'Result: {var}')
     import re
 
+    # Fix unquoted dictionary keys and string values: {key: value} -> {'key': 'value'}
+    # This is complex, so we'll handle common patterns
+
+    # Pattern: {word: word, word: number} -> {'word': 'word', 'word': number}
+    def fix_dict_quotes(match):
+        dict_content = match.group(1)
+        # First quote all keys: word: -> 'word':
+        fixed = re.sub(r'(\w+):', r"'\1':", dict_content)
+        # Then quote string values (words that are not numbers): : word -> : 'word'
+        fixed = re.sub(r":\s*([a-zA-Z]\w*)(?=\s*[,}])", r": '\1'", fixed)
+        return '{' + fixed + '}'
+
+    script_code = re.sub(r'\{([^{}]+)\}', fix_dict_quotes, script_code)
+
+    # Fix f-strings that lost their quotes: print(fResult: {var}) -> print(f'Result: {var}')
     # Pattern 1: print(f<text>: {<var>}) -> print(f'<text>: {<var>}')
     # Match: print(f followed by text with colon and curly braces, no quotes
     script_code = re.sub(r'print\(f([A-Za-z][^\'"\(\)]*:\s*\{[^}]+\})\)', r"print(f'\1')", script_code)
