@@ -1,33 +1,32 @@
 #!/usr/bin/env python3
 """
 Dynamic Ansible Inventory Script
-Reads JSON from stdin and converts it to Ansible inventory format.
+Reads JSON from a cache file and converts it to Ansible inventory format.
 """
 
 import json
 import sys
+import os
+import argparse
 
-def main():
-    # Read raw stdin
-    try:
-        stdin_data = sys.stdin.read()
-        print(f"DEBUG: Received stdin data: {stdin_data}", file=sys.stderr)
+# Cache file location
+CACHE_FILE = '/tmp/ansible_inventory_cache.json'
 
-        # Try to parse as JSON
-        if stdin_data:
-            data = json.loads(stdin_data)
-            print(f"DEBUG: Parsed JSON: {json.dumps(data, indent=2)}", file=sys.stderr)
-        else:
-            print("DEBUG: No stdin data received", file=sys.stderr)
-            data = None
-    except json.JSONDecodeError as e:
-        print(f"DEBUG: JSON decode error - {e}", file=sys.stderr)
-        data = None
-    except Exception as e:
-        print(f"DEBUG: Error reading stdin - {e}", file=sys.stderr)
-        data = None
+# Map device types to Ansible network_os
+DEVICE_TYPE_MAP = {
+    'aruba': 'arubaos',
+    'asa': 'asa',
+    'bigip': 'bigip',
+    'eos': 'eos',
+    'ios': 'ios',
+    'iosxr': 'iosxr',
+    'junos': 'junos',
+    'nxos': 'nxos',
+    'sros': 'sros'
+}
 
-    # Return minimal empty inventory
+def build_inventory_from_data(data):
+    """Build Ansible inventory from input data."""
     inventory = {
         "_meta": {
             "hostvars": {}
@@ -38,7 +37,78 @@ def main():
         }
     }
 
-    print(json.dumps(inventory, indent=2))
+    if not data:
+        return inventory
+
+    nodes = data.get("inventory_nodes", [])
+
+    for node in nodes:
+        name = node.get("name")
+        attributes = node.get("attributes", {})
+
+        if not name:
+            continue
+
+        # Add host to 'all' group
+        inventory["all"]["hosts"].append(name)
+
+        # Build host variables
+        hostvars = {}
+
+        if 'host' in attributes:
+            hostvars['ansible_host'] = attributes['host']
+
+        if 'username' in attributes:
+            hostvars['ansible_user'] = attributes['username']
+
+        if 'password' in attributes:
+            hostvars['ansible_password'] = attributes['password']
+
+        if 'port' in attributes:
+            hostvars['ansible_port'] = attributes['port']
+
+        device_type = attributes.get('device_type') or attributes.get('ostype')
+        if device_type:
+            network_os = DEVICE_TYPE_MAP.get(device_type, device_type)
+            hostvars['ansible_network_os'] = network_os
+            hostvars['ansible_connection'] = 'ansible.netcommon.network_cli'
+
+        if 'command' in attributes:
+            hostvars['device_command'] = attributes['command']
+
+        if 'options' in attributes:
+            hostvars['device_options'] = attributes['options']
+
+        inventory["_meta"]["hostvars"][name] = hostvars
+
+    return inventory
+
+def main():
+    parser = argparse.ArgumentParser(description='Ansible Dynamic Inventory')
+    parser.add_argument('--list', action='store_true', help='List all hosts')
+    parser.add_argument('--host', help='Get variables for a specific host')
+    args = parser.parse_args()
+
+    # Try to load from cache file
+    data = None
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, 'r') as f:
+                data = json.load(f)
+        except Exception as e:
+            print(f"Warning: Could not load cache - {e}", file=sys.stderr)
+
+    # Build inventory
+    inventory = build_inventory_from_data(data)
+
+    if args.list:
+        print(json.dumps(inventory, indent=2))
+    elif args.host:
+        hostvars = inventory.get("_meta", {}).get("hostvars", {}).get(args.host, {})
+        print(json.dumps(hostvars, indent=2))
+    else:
+        # Default: return list
+        print(json.dumps(inventory, indent=2))
 
 if __name__ == "__main__":
     main()

@@ -1,18 +1,11 @@
 #!/bin/bash
-"""
-Wrapper script to run Ansible playbook with dynamic inventory from stdin
-
-Usage:
-  cat input.json | ./run_playbook.sh
-  cat input.json | ./run_playbook.sh -c "show version"
-"""
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# Save stdin to temporary file
-TEMP_INPUT=$(mktemp)
-cat > "$TEMP_INPUT"
+# Save stdin to cache file for dynamic inventory
+CACHE_FILE="/tmp/ansible_inventory_cache.json"
+cat > "$CACHE_FILE"
 
 # Parse command line arguments
 COMMAND=""
@@ -41,10 +34,10 @@ if [ -n "$COMMAND" ]; then
 fi
 
 # Run ansible-playbook with dynamic inventory
-cat "$TEMP_INPUT" | ansible-playbook \
+ansible-playbook \
     -i ./dynamic_inventory.py \
     get_config.yml \
     $EXTRA_VARS
 
 # Clean up
-rm -f "$TEMP_INPUT"
+rm -f "$CACHE_FILE"
