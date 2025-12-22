@@ -8,7 +8,8 @@
                 "itential_password": "iagpass",
                 "itential_platform": "cisco_iosxr",
                 "itential_port": 22,
-                "itential_driver": "scrapli"
+                "itential_driver": "scrapli",
+                "itential_ssh_strict_key": false
             }
         }
     ]
