@@ -244,7 +244,7 @@ class Inventory(Sequence):
             name = node.get("name")
             attributes = node.get("attributes", {})
 
-            driver = attributes.get("driver", "netmiko")
+            driver = attributes.get("itential_driver", attributes.get("driver", "netmiko"))
 
             kwargs = {"name": name}
 

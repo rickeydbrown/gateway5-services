@@ -75,6 +75,70 @@ The inventory file defines the devices to connect to:
 - `itential_driver`: Driver to use (`netmiko` or `scrapli`)
 - `itential_become`: Enable privilege escalation (optional, boolean)
 - `itential_become_password`: Password for privilege escalation (optional)
+- `itential_driver_options`: Driver-specific options (optional, see below)
+
+### Driver Options
+
+For advanced configuration, use `itential_driver_options` to pass driver-specific settings:
+
+#### Scrapli with SSH Host Key Verification Disabled (Paramiko Transport - Recommended)
+
+```json
+{
+    "itential_driver": "scrapli",
+    "itential_driver_options": {
+        "scrapli": {
+            "auth_strict_key": false,
+            "transport": "paramiko"
+        }
+    }
+}
+```
+
+#### Scrapli with SSH Host Key Verification Disabled (System Transport)
+
+```json
+{
+    "itential_driver": "scrapli",
+    "itential_driver_options": {
+        "scrapli": {
+            "auth_strict_key": false,
+            "transport": "system",
+            "transport_options": {
+                "ssh_options": ["-o StrictHostKeyChecking=no", "-o UserKnownHostsFile=/dev/null"]
+            }
+        }
+    }
+}
+```
+
+#### Netmiko with SSH Host Key Verification Disabled
+
+```json
+{
+    "itential_driver": "netmiko",
+    "itential_driver_options": {
+        "netmiko": {
+            "ssh_strict": false,
+            "system_host_keys": false
+        }
+    }
+}
+```
+
+#### Netmiko with Fast CLI Mode
+
+```json
+{
+    "itential_driver": "netmiko",
+    "itential_driver_options": {
+        "netmiko": {
+            "fast_cli": true,
+            "global_delay_factor": 0.5
+        }
+    }
+}
+```
 
 ## Using netsdk in Your Own Scripts
 
