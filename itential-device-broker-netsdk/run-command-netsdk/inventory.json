@@ -6,9 +6,9 @@
                 "itential_host": "10.102.156.5",
                 "itential_user": "iag",
                 "itential_password": "iagpass",
-                "itential_platform": "cisco_xr",
+                "itential_platform": "cisco_iosxr",
                 "itential_port": 22,
-                "itential_driver": "netmiko"
+                "itential_driver": "scrapli"
             }
         }
     ]
