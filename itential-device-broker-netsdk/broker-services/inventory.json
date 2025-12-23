@@ -1,0 +1,21 @@
+{
+    "inventory_nodes": [
+        {
+            "name": "test-router-1",
+            "attributes": {
+                "itential_host": "10.102.156.5",
+                "itential_user": "iag",
+                "itential_password": "iagpass",
+                "itential_platform": "cisco_iosxr",
+                "itential_port": 22,
+                "itential_driver": "scrapli",
+                "itential_driver_options": {
+                    "scrapli": {
+                        "auth_strict_key": false,
+                        "transport": "paramiko"
+                    }
+                }
+            }
+        }
+    ]
+}
