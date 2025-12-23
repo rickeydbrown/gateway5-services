@@ -78,7 +78,7 @@ Examples:
     # Get config using platform-specific defaults
     cat inventory.json | python3 get-config-netsdk.py
 
-    # Get config with custom command
+    # Get config with custom command (applies to all devices)
     cat inventory.json | python3 get-config-netsdk.py -c "show running-config"
 
     # Multiple commands
@@ -86,6 +86,11 @@ Examples:
 
     # With different log level
     cat inventory.json | python3 get-config-netsdk.py --log-level DEBUG
+
+Command Priority:
+    1. CLI argument (-c) - highest priority, applies to all devices
+    2. Device attribute (command or cmd) - per-device override
+    3. Platform default - used if neither above is specified
 
 Input format (stdin):
 {
@@ -98,7 +103,8 @@ Input format (stdin):
         "itential_password": "password",
         "itential_platform": "cisco_iosxr",
         "itential_port": 22,
-        "itential_driver": "scrapli"
+        "itential_driver": "scrapli",
+        "command": "show configuration"
       }
     }
   ]
@@ -149,16 +155,49 @@ Output format (stdout):
             print("Error: No inventory_nodes found in input", file=sys.stderr)
             sys.exit(1)
 
-        # Convert back to JSON string for netsdk.broker.load_inventory
-        inventory_json_str = json.dumps(inventory_data)
-        inventory = netsdk.broker.load_inventory(inventory_json_str)
+        # Group devices by their command requirements
+        # Priority: 1) CLI argument (-c), 2) device attribute (command/cmd), 3) platform default
+        device_groups = {}  # Key: command tuple, Value: list of device nodes
 
-        # Get config (with optional custom commands)
-        commands = args.command if args.command else None
-        results = await netsdk.broker.get_config(inventory, commands=commands)
+        for node in inventory_data["inventory_nodes"]:
+            attributes = node.get("attributes", {})
 
-        # Convert results to list
-        results_list = json.loads(results.model_dump_json())
+            # Check for device-specific command in attributes
+            device_command = attributes.get('command') or attributes.get('cmd')
+
+            # Determine which command to use for this device
+            if args.command:
+                # CLI argument has highest priority
+                command_key = tuple(args.command)
+            elif device_command:
+                # Device attribute has second priority
+                command_key = (device_command,) if isinstance(device_command, str) else tuple(device_command)
+            else:
+                # Use platform default (None means netsdk will use platform-specific default)
+                command_key = None
+
+            if command_key not in device_groups:
+                device_groups[command_key] = []
+            device_groups[command_key].append(node)
+
+        # Process each group of devices with the same command
+        all_results = []
+        for command_key, nodes in device_groups.items():
+            # Create inventory for this group
+            group_inventory_data = {"inventory_nodes": nodes}
+            group_inventory_json = json.dumps(group_inventory_data)
+            group_inventory = netsdk.broker.load_inventory(group_inventory_json)
+
+            # Convert command key back to list
+            commands = list(command_key) if command_key else None
+
+            # Get config for this group
+            group_results = await netsdk.broker.get_config(group_inventory, commands=commands)
+            group_results_list = json.loads(group_results.model_dump_json())
+            all_results.extend(group_results_list)
+
+        # Sort results to match original order
+        results_list = sorted(all_results, key=lambda r: [n['name'] for n in inventory_data["inventory_nodes"]].index(r['name']))
 
         # For single device, output just the config output (matching itential-device-getconfiginventory behavior)
         if len(inventory_data["inventory_nodes"]) == 1:
