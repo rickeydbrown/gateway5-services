@@ -26,13 +26,13 @@ from datetime import datetime
 from datetime import timezone
 from typing import Any
 
-from netsdk.core import constants
+from netsdk.core import platforms
 from netsdk.core.exceptions import NetsdkError
 from netsdk.core.models import Host
 from netsdk.core.responses import CommandResult
 from netsdk.core.responses import PingResult
 from netsdk.drivers import MapFrom
-from netsdk.drivers import loader
+from netsdk.executor import loader
 from netsdk.utils import logging
 
 __all__ = ("get_config", "is_alive", "run_command", "set_config")
@@ -64,15 +64,14 @@ async def _invoke_method(host: Host, name: str, *args: Any, **kwargs: Any) -> An
     options_kwargs = {}
 
     for field_name, fi in options_class.model_fields.items():
-        value = None
-
-        if hasattr(host.driver_options, field_name):
-            value = getattr(host.driver_options, field_name)
-
+        value = getattr(host.driver_options, field_name, None)
         if value is None:
             for ele in fi.metadata:
                 if isinstance(ele, MapFrom):
                     value = getattr(host, ele.name)
+                    logging.debug(
+                        f"Mapping {ele.name} to driver {host.driver}.{field_name}"
+                    )
 
         if value is not None:
             options_kwargs[field_name] = value
@@ -247,7 +246,7 @@ async def get_config(
     Args:
         host: The network device to get configuration from
         commands: Optional list of commands to execute. When provided, the
-            platform-specific command lookup from constants is skipped.
+            platform-specific command lookup from platforms is skipped.
 
     Returns:
         A list of CommandResult objects for each command executed
@@ -255,7 +254,7 @@ async def get_config(
     Raises:
         NetsdkError: If commands not provided and platform not defined or not supported
     """
-    # If commands are provided, skip constants lookup
+    # If commands are provided, skip platforms lookup
     if commands is not None:
         return await _send_command(host, commands)
 
@@ -285,10 +284,10 @@ async def get_config(
         raise NetsdkError(msg)
 
     try:
-        commands_tuple = getattr(constants, platform_const)
+        platform = getattr(platforms, platform_const)
     except AttributeError as exc:
         # Get available platforms for helpful error message
-        available = [name for name in dir(constants) if name.isupper()]
+        available = [name for name in dir(platforms) if name.isupper()]
         msg = (
             f"platform '{host.platform}' is not supported for get_config operation. "
             f"Available platforms: {', '.join(available[:10])}... "
@@ -297,8 +296,8 @@ async def get_config(
         )
         raise NetsdkError(msg) from exc
 
-    # Convert tuple to list for run_command
-    commands = list(commands_tuple)
+    # Convert platform commands tuple to list for run_command
+    commands = list(platform.get_config_commands)
     return await _send_command(host, commands)
 
 
@@ -317,10 +316,22 @@ async def _send_config(host: Host, commands: list[str]) -> list[CommandResult]:
     try:
         start = datetime.now(timezone.utc)
 
+        # Determine if commit is required based on platform
+        commit = False
+        if host.platform:
+            platform_const = host.platform.upper().replace("-", "_").replace(" ", "_")
+            try:
+                platform = getattr(platforms, platform_const)
+                commit = platform.supports_commit
+            except AttributeError:
+                # Platform not found, use default (no commit)
+                pass
+
         # Wrap with safety timeout
         timeout = getattr(host, "operation_timeout", DEFAULT_OPERATION_TIMEOUT)
         output = await asyncio.wait_for(
-            _invoke_method(host, "send_config", commands), timeout=timeout
+            _invoke_method(host, "send_config", commands, commit=commit),
+            timeout=timeout,
         )
 
         # Validate driver response

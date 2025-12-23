@@ -4,14 +4,17 @@
 
 """Package metadata for NetSDK.
 
-This module provides version and authorship information.
+This module provides version and authorship information extracted from the
+package metadata using importlib.metadata.
 
 Module Variables:
     name: Package name
     author: Package author
-    version: Package version
+    version: Package version (dynamically extracted from package metadata)
 """
+
+from importlib.metadata import version as _version
 
 name: str = "netsdk"
 author: str = "Itential"
-version: str = "0.0.1.dev7+f05b1b3"  # Version from copied source
+version: str = _version(name)

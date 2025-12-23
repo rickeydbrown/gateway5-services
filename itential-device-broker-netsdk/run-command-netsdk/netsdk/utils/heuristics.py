@@ -2,11 +2,150 @@
 # Unauthorized copying of this file, via any medium is strictly prohibited
 # Proprietary and confidential
 
-"""Heuristics scanner for filtering sensitive data from log messages.
+r"""Heuristic-based sensitive data detection and redaction for NetSDK.
 
-This module provides functionality to detect and redact sensitive information
-such as API keys, passwords, tokens, and other personally
-identifiable information (PII) from log messages before they are written.
+This module provides a production-grade scanner for detecting and redacting
+sensitive information in strings, dictionaries, and JSON data. It uses
+pattern-based heuristics to identify credentials, tokens, API keys, and other
+personally identifiable information (PII) before they are logged or exposed.
+
+Key Features:
+
+    Pattern-Based Detection:
+        - Pre-configured patterns for common sensitive data
+          (API keys, passwords, tokens)
+        - Regular expression matching with compiled patterns for performance
+        - Customizable patterns for application-specific sensitive data
+        - Support for both value-based and key-based detection
+
+    Multiple Data Structure Support:
+        - String scanning and redaction with scan_and_redact()
+        - Dictionary deep scanning with sanitize_dict()
+        - JSON string parsing and sanitization with sanitize_json()
+        - Recursive processing of nested structures
+
+    Singleton Pattern:
+        - Single global scanner instance ensures consistent configuration
+        - Thread-safe singleton implementation
+        - Can be reset and reconfigured via configure_scanner()
+
+    Customizable Redaction:
+        - Per-pattern custom redaction functions
+        - Default redaction format: [REDACTED_PATTERN_NAME]
+        - Preserves structure while removing sensitive content
+
+    Key-Based Filtering:
+        - Automatic detection of sensitive dictionary keys
+        - Configurable list of sensitive key names
+        - Case-insensitive key matching with normalization
+
+Default Patterns:
+    The scanner comes pre-configured with patterns to detect:
+    - API keys and authentication tokens
+    - Bearer tokens and JWT tokens
+    - AWS and cloud provider credentials
+    - Private keys and certificates
+    - Passwords in URLs and connection strings
+    - OAuth client secrets
+    - Generic secret patterns
+
+Architecture:
+    The module uses a singleton Scanner class that maintains:
+    - Compiled regex patterns for efficient matching
+    - Per-pattern redaction functions for custom handling
+    - Set of sensitive key names for dictionary filtering
+    - Pattern registry for dynamic addition/removal
+
+Performance Considerations:
+    - Regex patterns are compiled once and cached
+    - Dictionary traversal is optimized for common cases
+    - String scanning uses compiled patterns for speed
+    - Minimal overhead when no sensitive data is found
+
+Examples:
+
+    Basic string redaction::
+
+        from netsdk.utils import heuristics
+
+        # Scan and redact sensitive data
+        text = "Connecting with API_KEY=sk_live_abc123456789012345"
+        clean = heuristics.scan_and_redact(text)
+        # Returns: "Connecting with API_KEY=[REDACTED_API_KEY]"
+
+    Dictionary sanitization::
+
+        from netsdk.utils import heuristics
+
+        config = {
+            "host": "10.0.0.1",
+            "username": "admin",
+            "password": "secret123",
+            "api_key": "sk_test_xyz",
+            "nested": {
+                "token": "bearer_abc"
+            }
+        }
+
+        clean_config = heuristics.sanitize_dict(config)
+        # Returns: {
+        #     "host": "10.0.0.1",
+        #     "username": "admin",
+        #     "password": "[REDACTED]",
+        #     "api_key": "[REDACTED]",
+        #     "nested": {"token": "[REDACTED]"}
+        # }
+
+    JSON sanitization::
+
+        from netsdk.utils import heuristics
+
+        json_str = '{"user": "admin", "password": "secret"}'
+        clean_json = heuristics.sanitize_json(json_str)
+        # Returns: '{"user": "admin", "password": "[REDACTED]"}'
+
+    Custom pattern configuration::
+
+        from netsdk.utils import heuristics
+
+        # Get the scanner instance
+        scanner = heuristics.get_scanner()
+
+        # Add custom pattern for employee IDs
+        scanner.add_pattern(
+            name="employee_id",
+            pattern=r"EMP\d{6}",
+            redaction_fn=lambda match: "[EMPLOYEE_ID]"
+        )
+
+        # Check if text contains sensitive data
+        if heuristics.has_sensitive_data("Employee EMP123456 logged in"):
+            print("Contains sensitive data!")
+
+    Reconfiguring the scanner::
+
+        from netsdk.utils import heuristics
+
+        # Reset and configure with custom patterns only
+        custom = {
+            "ssn": r"\b\d{3}-\d{2}-\d{4}\b",
+            "credit_card": r"\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b"
+        }
+
+        heuristics.configure_scanner(custom)
+        # Scanner now uses only the custom patterns
+
+Module Functions:
+    get_scanner() -> Scanner: Get the singleton scanner instance
+    configure_scanner(patterns): Reset and configure with custom patterns
+    scan_and_redact(text): Scan and redact sensitive data in string
+    has_sensitive_data(text): Check if text contains sensitive data
+    sanitize_dict(data): Deep sanitize dictionary structures
+    sanitize_json(json_str): Parse and sanitize JSON strings
+
+See Also:
+    netsdk.utils.logging: Logging system that uses this module
+    re: Python regular expression operations
 """
 
 import json

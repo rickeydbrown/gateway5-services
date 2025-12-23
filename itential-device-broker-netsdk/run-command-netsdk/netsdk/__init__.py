@@ -39,7 +39,7 @@ Example:
 """
 
 from netsdk import metadata
-from netsdk.executor import broker
+from netsdk.api import broker
 from netsdk.utils import logging
 
 __all__ = (

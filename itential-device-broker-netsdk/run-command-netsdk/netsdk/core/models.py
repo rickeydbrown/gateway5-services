@@ -23,35 +23,68 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 
-from netsdk.drivers import loader
+from netsdk.executor import loader
 
 __all__ = ("Host", "Inventory")
 
 
 class Host(BaseModel):
-    """Represents a network device host.
+    """Immutable model representing a network device with connection parameters.
 
-    The Host model represents a network device that provides a CLI or API interface
-    for sending and receiving commands. It includes connection details, authentication
-    credentials, and driver-specific options.
+    Host encapsulates all information needed to connect to and interact with a network
+    device, including connection details, authentication credentials, and driver-specific
+    configuration options. Host instances are immutable and validated using Pydantic.
+
+    The model supports multiple drivers (netmiko, scrapli) and provides flexible field
+    mapping through aliases to work with various inventory formats. Common Host fields
+    are automatically mapped to driver-specific options when establishing connections.
+
+    Attributes:
+        name: Unique identifier for the host within the inventory
+        host: Hostname or IP address of the target device
+        port: Optional TCP port number (defaults to driver-specific port)
+        driver: Driver library to use (default: "netmiko")
+        platform: Network OS platform identifier (e.g., "cisco_ios", "juniper_junos")
+        user: Authentication username
+        password: Authentication password
+        become: Whether to enter privileged/enable mode after connecting
+        become_password: Password for privilege escalation (enable mode)
+        driver_options: Driver-specific configuration options
 
     Examples:
-        Basic host definition:
-            host = Host(
-                name="router1",
-                host="192.168.1.1",
-                user="admin",
-                password="admin"
-            )
+        Basic host with minimal configuration:
+            >>> host = Host(
+            ...     name="router1",
+            ...     host="192.168.1.1",
+            ...     user="admin",
+            ...     password="secret"
+            ... )
+
+        Host with platform and privilege escalation:
+            >>> host = Host(
+            ...     name="switch1",
+            ...     host="10.0.0.1",
+            ...     platform="cisco_ios",
+            ...     user="admin",
+            ...     password="secret",
+            ...     become=True,
+            ...     become_password="enable_secret"
+            ... )
 
         Host with driver-specific options:
-            host = Host(
-                name="switch1",
-                host="10.0.0.1",
-                driver="netmiko",
-                type="cisco_ios",
-                options={"netmiko_fast_cli": True}
-            )
+            >>> from netsdk.drivers.netmiko import DriverOptions
+            >>> options = DriverOptions(fast_cli=True, timeout=60)
+            >>> host = Host(
+            ...     name="router2",
+            ...     host="192.168.1.2",
+            ...     driver="netmiko",
+            ...     platform="arista_eos",
+            ...     driver_options=options
+            ... )
+
+    Note:
+        All Host instances are immutable (frozen=True) to ensure thread-safety
+        and prevent accidental modification during parallel operations.
     """
 
     model_config = ConfigDict(extra="forbid", validate_assignment=True, frozen=True)
@@ -215,27 +248,101 @@ class Host(BaseModel):
     )
 
     def __str__(self) -> str:
-        """String representation of the host."""
+        """Return human-readable string representation of the host.
+
+        Returns:
+            Formatted string showing host name, address, and driver
+        """
         return f"Host(name={self.name}, host={self.host}, driver={self.driver})"
 
     def __repr__(self) -> str:
-        """Detailed string representation of the host."""
+        """Return detailed string representation for debugging.
+
+        Returns:
+            String with quoted values suitable for repr() output
+        """
         return f"Host(name={self.name!r}, host={self.host!r}, driver={self.driver!r})"
 
 
 class Inventory(Sequence):
+    """Collection of Host objects with validation and sequence-like interface.
+
+    Inventory represents a collection of network devices (Host objects) with support
+    for iteration, indexing, and validation. It implements the Sequence protocol,
+    allowing it to be used like a list with standard Python sequence operations.
+
+    The Inventory class handles parsing of inventory data structures (typically loaded
+    from JSON or YAML files) and converts them into validated Host objects. It supports
+    driver-specific options parsing and provides pre-flight validation to catch
+    configuration errors before attempting device connections.
+
+    Attributes:
+        elements: Internal list of Host objects in the inventory
+
+    Examples:
+        Create inventory from dictionary structure:
+            >>> inventory_data = [{
+            ...     "name": "router1",
+            ...     "attributes": {
+            ...         "itential_host": "192.168.1.1",
+            ...         "itential_user": "admin",
+            ...         "itential_password": "secret",
+            ...         "itential_platform": "cisco_ios"
+            ...     }
+            ... }]
+            >>> inventory = Inventory(inventory_data)
+
+        Access hosts using sequence operations:
+            >>> first_host = inventory[0]
+            >>> for host in inventory:
+            ...     print(host.name)
+            >>> if "router1" in inventory:
+            ...     print("Host found")
+
+        Non-strict mode for partial validation:
+            >>> inventory = Inventory(data, strict=False)
+            >>> errors = inventory.validate()
+            >>> if errors:
+            ...     print(f"Found {len(errors)} validation errors")
+
+    Note:
+        When strict=True (default), the constructor raises ValueError if any hosts
+        fail validation. Use strict=False to defer validation and inspect errors
+        using the validate() method.
+    """
+
     def __init__(
         self, items: list[dict[str, Any]] | None = None, *, strict: bool = True
     ) -> None:
-        """Initialize the inventory with a list of hosts.
+        """Initialize inventory with host definitions and optional validation.
+
+        Parses inventory node dictionaries into Host objects with driver-specific
+        options. Each node should contain a 'name' and 'attributes' dictionary with
+        host connection parameters. The 'attributes' dictionary uses 'itential_*'
+        field names that are mapped to Host model fields via aliases.
 
         Args:
-            items: List of inventory node dictionaries containing host definitions
-            strict: If True, validate all hosts during initialization and raise
-                ValueError if any validation errors are found. Defaults to True.
+            items: List of inventory node dictionaries. Each node should have
+                'name' (str) and 'attributes' (dict) keys. The attributes dict
+                contains host parameters using 'itential_*' naming convention.
+                Example: [{"name": "router1", "attributes": {"itential_host": "192.168.1.1"}}]
+            strict: If True, validates all hosts during initialization and raises
+                ValueError if any validation errors occur. If False, defers validation
+                and allows inspection of errors via validate() method. Default: True.
 
         Raises:
-            ValueError: If strict=True and any hosts fail validation
+            ValueError: If strict=True and any hosts fail validation. Error message
+                includes all validation errors encountered.
+
+        Examples:
+            Strict validation (raises on error):
+                >>> inventory = Inventory(data)  # Raises ValueError if invalid
+
+            Deferred validation:
+                >>> inventory = Inventory(data, strict=False)
+                >>> errors = inventory.validate()
+                >>> if errors:
+                ...     print("Validation failed:", errors)
         """
         self.elements: list[Host] = []
 
@@ -244,7 +351,7 @@ class Inventory(Sequence):
             name = node.get("name")
             attributes = node.get("attributes", {})
 
-            driver = attributes.get("itential_driver", attributes.get("driver", "netmiko"))
+            driver = attributes.get("itential_driver", "netmiko")
 
             kwargs = {"name": name}
 
@@ -275,21 +382,37 @@ class Inventory(Sequence):
                 raise ValueError(msg)
 
     def __len__(self) -> int:
-        """Return the number of hosts in the inventory."""
+        """Return the number of hosts in the inventory.
+
+        Returns:
+            Count of Host objects in the inventory
+        """
         return len(self.elements)
 
     def __iter__(self) -> Iterator[Host]:
-        """Iterate over hosts in the inventory."""
+        """Return iterator over hosts in the inventory.
+
+        Returns:
+            Iterator yielding Host objects in order
+        """
         return iter(self.elements)
 
     def __contains__(self, item: Host | str) -> bool:
-        """Check if a host exists in the inventory.
+        """Check if a host exists in the inventory by object or name.
+
+        Supports both Host object comparison and string-based name lookup
+        for flexible membership testing.
 
         Args:
-            item: Either a Host object or a host name string
+            item: Either a Host object for identity comparison or a string
+                for name-based lookup
 
         Returns:
-            True if the host exists, False otherwise
+            True if the host exists in the inventory, False otherwise
+
+        Examples:
+            >>> host in inventory  # Check by Host object
+            >>> "router1" in inventory  # Check by name string
         """
         if isinstance(item, Host):
             return item in self.elements
@@ -298,51 +421,86 @@ class Inventory(Sequence):
         return False
 
     def __getitem__(self, index: int | slice) -> Host | list[Host]:
-        """Get a host by index or slice.
+        """Get host(s) by index or slice.
+
+        Implements sequence protocol for indexed access and slicing operations.
+        Supports negative indices and standard Python slice notation.
 
         Args:
-            index: Integer index or slice object
+            index: Integer index for single host access or slice object for
+                multiple hosts. Supports negative indices (e.g., -1 for last host)
 
         Returns:
-            Host object for integer index, list of Hosts for slice
+            Single Host object if index is int, list of Host objects if slice
+
+        Raises:
+            IndexError: If index is out of range
 
         Examples:
-            first_host = inventory[0]
-            last_host = inventory[-1]
-            subset = inventory[1:3]
+            >>> first = inventory[0]  # First host
+            >>> last = inventory[-1]  # Last host
+            >>> subset = inventory[1:3]  # Hosts at index 1 and 2
+            >>> reversed_subset = inventory[::-1]  # All hosts in reverse
         """
         if isinstance(index, slice):
             return self.elements[index]
         return self.elements[index]
 
     def __str__(self) -> str:
-        """String representation of the inventory."""
+        """Return human-readable string representation of the inventory.
+
+        Returns:
+            String showing inventory size
+        """
         return f"Inventory({len(self)} hosts)"
 
     def __repr__(self) -> str:
-        """Detailed string representation of the inventory."""
+        """Return detailed string representation showing all host names.
+
+        Returns:
+            String with list of host names for debugging
+        """
         host_names = [host.name for host in self.elements]
         return f"Inventory(hosts={host_names})"
 
     def validate(self) -> list[str]:
-        """Validate all hosts in the inventory.
+        """Validate all hosts in the inventory for configuration correctness.
 
-        Performs pre-flight validation of all hosts to catch configuration
-        errors before attempting to connect to devices. This includes:
-        - Checking that all required fields are present
-        - Validating driver names are loadable
-        - Validating driver options are correctly formed
+        Performs comprehensive pre-flight validation to catch configuration errors
+        before attempting device connections. This validation includes:
+
+        - Driver availability: Ensures specified drivers can be loaded
+        - Driver options: Validates driver-specific option classes exist
+        - Option instantiation: Verifies driver options can be constructed
+        - Field mapping: Checks Host fields map correctly to driver options
+
+        Validation is non-blocking - all hosts are checked and all errors are
+        collected before returning, allowing you to see all issues at once.
 
         Returns:
-            List of validation error messages. Empty list if all hosts are valid.
+            List of validation error messages, one per error found. Empty list
+            indicates all hosts are valid and ready for use. Each error message
+            includes the host name and specific issue encountered.
 
         Examples:
-            errors = inventory.validate()
-            if errors:
-                for error in errors:
-                    print(f"Validation error: {error}")
-            else:
-                print("All hosts validated successfully")
+            Check for errors and handle appropriately:
+                >>> errors = inventory.validate()
+                >>> if errors:
+                ...     print(f"Found {len(errors)} validation errors:")
+                ...     for error in errors:
+                ...         print(f"  - {error}")
+                ... else:
+                ...     print("All hosts validated successfully")
+
+            Validate before executing commands:
+                >>> errors = inventory.validate()
+                >>> if not errors:
+                ...     results = await broker.run_command(inventory, ["show version"])
+
+        Note:
+            This method is automatically called during __init__ when strict=True.
+            Use this method manually when initializing with strict=False to
+            inspect validation errors without raising exceptions.
         """
         errors = []
 

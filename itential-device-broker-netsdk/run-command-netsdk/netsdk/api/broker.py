@@ -6,28 +6,22 @@
 
 This module provides the core API functions for executing commands, managing
 configurations, and checking connectivity across network devices. It handles
-parallel execution using asyncio.gather() and provides clean, type-safe interfaces
-for both batch and streaming operations.
+parallel execution using asyncio.gather() and provides clean, type-safe interfaces.
 
 The broker layer orchestrates parallel operations across inventories while the
 handler layer manages individual device interactions.
 
 Functions:
     run_command: Execute commands on devices in parallel
-    run_command_streaming: Stream command results as they complete
     get_config: Retrieve configuration from devices in parallel
-    get_config_streaming: Stream config results as they complete
     set_config: Send configuration commands to devices in parallel
-    set_config_streaming: Stream config results as they complete
     is_alive: Check device connectivity in parallel
-    is_alive_streaming: Stream connectivity results as they complete
     load_inventory: Load inventory from file, string, or stdin
 """
 
 import asyncio
 import sys
 
-from collections.abc import AsyncIterator
 from collections.abc import Awaitable
 from collections.abc import Callable
 from functools import partial
@@ -48,15 +42,11 @@ from netsdk.utils.json import loads
 __all__ = (
     "STDIN_TIMEOUT",
     "get_config",
-    "get_config_streaming",
     "is_alive",
-    "is_alive_streaming",
     "load_inventory",
     "main",
     "run_command",
-    "run_command_streaming",
     "set_config",
-    "set_config_streaming",
 )
 
 # Default timeout for reading inventory from stdin (in seconds)
@@ -426,229 +416,6 @@ def load_inventory(
         raise TypeError(msg)
 
     return Inventory(inventory_nodes)
-
-
-# Streaming API functions that yield results as they complete
-
-
-async def run_command_streaming(
-    inventory: Inventory,
-    commands: list[str],
-    timeout: float | None = None,
-) -> AsyncIterator[list[CommandResult]]:
-    """Execute commands on hosts and yield results as they complete.
-
-    This streaming version yields CommandResult objects as soon as each host completes,
-    rather than waiting for all hosts to finish. Useful for providing real-time feedback
-    in interactive applications or processing results incrementally.
-
-    Args:
-        inventory: The inventory of network devices to execute commands on
-        commands: A list of commands to execute on each network device
-        timeout: Optional timeout in seconds for each host operation
-
-    Yields:
-        list[CommandResult]: Results for each host as they complete
-
-    Raises:
-        ValueError: If commands list is empty, inventory is None, or inventory is empty
-    """
-    if not commands:
-        raise ValueError("commands list cannot be empty")
-
-    if inventory is None:
-        raise ValueError("inventory cannot be None")
-
-    if len(inventory) == 0:
-        raise ValueError("inventory is empty, no hosts to execute commands on")
-
-    logging.info(f"streaming {len(commands)} command(s) to {len(inventory)} hosts")
-
-    # Create tasks for each host
-    tasks = {
-        asyncio.create_task(
-            _with_timeout(
-                host,
-                partial(handlers.run_command, commands=commands),
-                timeout,
-                _create_command_timeout_result,
-            )
-        ): host
-        for host in inventory
-    }
-
-    # Yield results as they complete
-    for coro in asyncio.as_completed(tasks.keys()):
-        try:
-            result = await coro
-            yield result
-        except Exception as exc:  # noqa: PERF203
-            # Log error but continue processing other hosts
-            host = tasks[coro]
-            logging.exception(f"error processing host {host.name}: {exc}")
-
-
-async def get_config_streaming(
-    inventory: Inventory,
-    commands: list[str] | None = None,
-    timeout: float | None = None,
-) -> AsyncIterator[list[CommandResult]]:
-    """Get configuration from devices and yield results as they complete.
-
-    This streaming version yields CommandResult objects as soon as each host completes,
-    rather than waiting for all hosts to finish.
-
-    Args:
-        inventory: The inventory of network devices to get configuration from
-        commands: Optional list of commands to execute. When provided, the
-            platform-specific command lookup from constants is skipped for all hosts.
-        timeout: Optional timeout in seconds for each host operation
-
-    Yields:
-        list[CommandResult]: Results for each host as they complete
-
-    Raises:
-        ValueError: If inventory is None or inventory is empty
-    """
-    if inventory is None:
-        raise ValueError("inventory cannot be None")
-
-    if len(inventory) == 0:
-        raise ValueError("inventory is empty, no hosts to get configuration from")
-
-    logging.info(f"streaming config from {len(inventory)} hosts")
-
-    # Create tasks for each host
-    tasks = {
-        asyncio.create_task(
-            _with_timeout(
-                host,
-                partial(handlers.get_config, commands=commands),
-                timeout,
-                _create_command_timeout_result,
-            )
-        ): host
-        for host in inventory
-    }
-
-    # Yield results as they complete
-    for coro in asyncio.as_completed(tasks.keys()):
-        try:
-            result = await coro
-            yield result
-        except Exception as exc:  # noqa: PERF203
-            # Log error but continue processing other hosts
-            host = tasks[coro]
-            logging.exception(f"error processing host {host.name}: {exc}")
-
-
-async def set_config_streaming(
-    inventory: Inventory,
-    commands: list[str],
-    timeout: float | None = None,
-) -> AsyncIterator[list[CommandResult]]:
-    """Send configuration commands to devices and yield results as they complete.
-
-    This streaming version yields CommandResult objects as soon as each host completes,
-    rather than waiting for all hosts to finish.
-
-    Args:
-        inventory: The inventory of network devices to configure
-        commands: A list of configuration commands to execute on each device
-        timeout: Optional timeout in seconds for each host operation
-
-    Yields:
-        list[CommandResult]: Results for each host as they complete
-
-    Raises:
-        ValueError: If commands list is empty, inventory is None, or inventory is empty
-    """
-    if not commands:
-        raise ValueError("commands list cannot be empty")
-
-    if inventory is None:
-        raise ValueError("inventory cannot be None")
-
-    if len(inventory) == 0:
-        raise ValueError("inventory is empty, no hosts to send configuration to")
-
-    logging.info(
-        f"streaming {len(commands)} config command(s) to {len(inventory)} hosts"
-    )
-
-    # Create tasks for each host
-    tasks = {
-        asyncio.create_task(
-            _with_timeout(
-                host,
-                partial(handlers.set_config, commands=commands),
-                timeout,
-                _create_command_timeout_result,
-            )
-        ): host
-        for host in inventory
-    }
-
-    # Yield results as they complete
-    for coro in asyncio.as_completed(tasks.keys()):
-        try:
-            result = await coro
-            yield result
-        except Exception as exc:  # noqa: PERF203
-            # Log error but continue processing other hosts
-            host = tasks[coro]
-            logging.exception(f"error processing host {host.name}: {exc}")
-
-
-async def is_alive_streaming(
-    inventory: Inventory,
-    timeout: float | None = None,
-) -> AsyncIterator[PingResult]:
-    """Check if devices are alive and yield results as they complete.
-
-    This streaming version yields PingResult objects as soon as each host completes,
-    rather than waiting for all hosts to finish.
-
-    Args:
-        inventory: The inventory of network devices to check
-        timeout: Optional timeout in seconds for each host operation
-
-    Yields:
-        PingResult: Result for each host as they complete
-
-    Raises:
-        ValueError: If inventory is None or inventory is empty
-    """
-    if inventory is None:
-        raise ValueError("inventory cannot be None")
-
-    if len(inventory) == 0:
-        raise ValueError("inventory is empty, no hosts to check alive status")
-
-    logging.info(f"streaming alive check for {len(inventory)} hosts")
-
-    # Create tasks for each host
-    tasks = {
-        asyncio.create_task(
-            _with_timeout(
-                host,
-                handlers.is_alive,
-                timeout,
-                _create_ping_timeout_result,
-            )
-        ): host
-        for host in inventory
-    }
-
-    # Yield results as they complete
-    for coro in asyncio.as_completed(tasks.keys()):
-        try:
-            result = await coro
-            yield result
-        except Exception as exc:  # noqa: PERF203
-            # Log error but continue processing other hosts
-            host = tasks[coro]
-            logging.exception(f"error processing host {host.name}: {exc}")
 
 
 # Import main from cli for backward compatibility (tests use broker.main)

@@ -154,7 +154,7 @@ class DriverOptions(DriverOptionsBase):
     become: Annotated[
         bool,
         Field(
-            default=False,
+            default=None,
             description=(
                 "Whether to automatically enter privileged/enable mode after connecting to "
                 "the device. When set to True, the driver will execute the platform-specific "
@@ -526,11 +526,12 @@ class Driver:
 
         return self._with_connection(_OP_RUN_COMMANDS, callback)
 
-    def _execute_config(self, commands: list[str]) -> str:
+    def _execute_config(self, commands: list[str], commit: bool) -> str:
         """Execute configuration commands synchronously using scrapli.
 
         Args:
             commands: A list of configuration commands to execute
+            commit: Whether to commit the configuration changes
 
         Returns:
             The output from the configuration session
@@ -541,7 +542,13 @@ class Driver:
 
         def callback(conn: Any) -> str:
             resp = conn.send_configs(commands)
-            return resp.result
+            output = resp.result
+
+            if commit:
+                commit_resp = conn.commit()
+                output += commit_resp.result
+
+            return output
 
         return self._with_connection(_OP_SEND_CONFIG, callback)
 
@@ -562,7 +569,7 @@ class Driver:
         """
         return await asyncio.to_thread(self._execute_commands, commands)
 
-    async def send_config(self, commands: list[str]) -> str:
+    async def send_config(self, commands: list[str], *, commit: bool = False) -> str:
         """Send configuration commands to the remote device.
 
         This method enters configuration mode, sends the configuration
@@ -570,6 +577,7 @@ class Driver:
 
         Args:
             commands: A list of configuration commands to execute
+            commit: Whether to commit the configuration changes (default: False)
 
         Returns:
             The output from the configuration session
@@ -577,7 +585,7 @@ class Driver:
         Raises:
             NetsdkError: If connection or command execution fails
         """
-        return await asyncio.to_thread(self._execute_config, commands)
+        return await asyncio.to_thread(self._execute_config, commands, commit)
 
     def _check_alive(self) -> bool:
         """Check if device is reachable synchronously.

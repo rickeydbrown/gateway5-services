@@ -267,5 +267,7 @@ class Loader:
             return result
 
 
-driver_loader = Loader(pathlib.Path(__file__).parent, "Driver")
-options_loader = Loader(pathlib.Path(__file__).parent, "DriverOptions")
+driver_loader = Loader(pathlib.Path(__file__).parent.parent / "drivers", "Driver")
+options_loader = Loader(
+    pathlib.Path(__file__).parent.parent / "drivers", "DriverOptions"
+)

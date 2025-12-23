@@ -762,7 +762,9 @@ class Driver:
 
         return results
 
-    def _execute_config_sync(self, kwargs: dict[str, Any], commands: list[str]) -> str:
+    def _execute_config_sync(
+        self, kwargs: dict[str, Any], commands: list[str], commit: bool
+    ) -> str:
         """Execute configuration commands synchronously (to be run in thread pool).
 
         This method performs synchronous I/O operations and should be
@@ -771,6 +773,7 @@ class Driver:
         Args:
             kwargs: Connection parameters for netmiko.ConnectHandler
             commands: List of configuration commands to execute
+            commit: Whether to commit the configuration changes
 
         Returns:
             The output from the configuration session
@@ -781,7 +784,12 @@ class Driver:
         with netmiko.ConnectHandler(**kwargs) as conn:
             self._enter_enable_mode(conn)
 
-            return conn.send_config_set(commands, cmd_verify=False)
+            output = conn.send_config_set(commands, cmd_verify=False)
+
+            if commit:
+                output += conn.commit()
+
+            return output
 
     async def send_commands(self, commands: list[str]) -> list[tuple[str, str]]:
         """Sends commands to the remote device and returns the output.
@@ -814,7 +822,7 @@ class Driver:
             )
             raise NetsdkError(msg) from exc
 
-    async def send_config(self, commands: list[str]) -> str:
+    async def send_config(self, commands: list[str], *, commit: bool = False) -> str:
         """Send configuration commands to the remote device.
 
         This method enters configuration mode, sends the configuration
@@ -822,6 +830,7 @@ class Driver:
 
         Args:
             commands: A list of configuration commands to execute
+            commit: Whether to commit the configuration changes (default: False)
 
         Returns:
             The output from the configuration session
@@ -833,7 +842,9 @@ class Driver:
             kwargs = self._prepare_kwargs()
 
             # Run blocking I/O in thread pool to avoid blocking event loop
-            return await asyncio.to_thread(self._execute_config_sync, kwargs, commands)
+            return await asyncio.to_thread(
+                self._execute_config_sync, kwargs, commands, commit
+            )
 
         except (
             netmiko.NetmikoTimeoutException,

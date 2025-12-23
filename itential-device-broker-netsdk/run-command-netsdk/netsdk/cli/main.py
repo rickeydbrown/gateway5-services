@@ -18,8 +18,8 @@ Example:
 import asyncio
 import sys
 
+from netsdk.api import broker
 from netsdk.cli.parser import create_parser
-from netsdk.executor import broker
 from netsdk.utils import logging
 
 
@@ -95,7 +95,9 @@ def main(argv: list[str] | None = None) -> int:
             )
 
         elif args.command == "get-config":
-            result = asyncio.run(broker.get_config(inventory, args.timeout))
+            result = asyncio.run(
+                broker.get_config(inventory, args.commands, args.timeout)
+            )
 
         elif args.command == "set-config":
             result = asyncio.run(

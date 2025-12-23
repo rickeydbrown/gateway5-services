@@ -79,6 +79,15 @@ def _add_get_config_parser(subparsers: argparse._SubParsersAction) -> None:
         help="Retrieve configuration from network devices",
         description="Get running configuration from all devices in the inventory",
     )
+    parser.add_argument(
+        "-c",
+        "--command",
+        action="append",
+        default=None,
+        dest="commands",
+        metavar="CMD",
+        help="Command to execute (can be specified multiple times)",
+    )
     _add_common_arguments(parser)
 
 
