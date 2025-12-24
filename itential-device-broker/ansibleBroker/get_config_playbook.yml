@@ -97,8 +97,6 @@
       set_fact:
         clean_config: "{{ config_results.stdout[0] | regex_replace('^Building configuration\\.\\.\\.\\n', '') }}"
       when:
-        - config_results is defined
-        - "'stdout' in config_results"
         - config_results is not skipped
         - ansible_network_os == 'iosxr'
 
@@ -106,8 +104,6 @@
       set_fact:
         clean_config: "{{ config_results.stdout[0] }}"
       when:
-        - config_results is defined
-        - "'stdout' in config_results"
         - config_results is not skipped
         - ansible_network_os != 'iosxr'
 
