@@ -152,7 +152,3 @@
       set_fact:
         device_alive: false
       when: not (is_supported | bool)
-
-    - name: Display result
-      debug:
-        msg: "{{ device_alive }}"
