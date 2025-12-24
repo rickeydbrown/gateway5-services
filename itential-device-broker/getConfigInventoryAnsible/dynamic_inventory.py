@@ -1,7 +1,17 @@
 #!/usr/bin/env python3
 """
 Dynamic Ansible Inventory Script
-Reads JSON from a cache file and converts it to Ansible inventory format.
+Reads JSON from stdin (if piped) or cache file and converts it to Ansible inventory format.
+
+Usage:
+    # From stdin
+    cat inventory.json | python3 dynamic_inventory.py --list
+
+    # From cache file
+    python3 dynamic_inventory.py --list
+
+    # Get specific host variables
+    cat inventory.json | python3 dynamic_inventory.py --host hostname
 """
 
 import json
@@ -89,9 +99,18 @@ def main():
     parser.add_argument('--host', help='Get variables for a specific host')
     args = parser.parse_args()
 
-    # Try to load from cache file
+    # Try to load from stdin first (if data is piped in)
     data = None
-    if os.path.exists(CACHE_FILE):
+    if not sys.stdin.isatty():
+        try:
+            stdin_data = sys.stdin.read()
+            if stdin_data.strip():
+                data = json.loads(stdin_data)
+        except Exception as e:
+            print(f"Warning: Could not parse stdin - {e}", file=sys.stderr)
+
+    # Fall back to cache file if stdin was empty or failed
+    if data is None and os.path.exists(CACHE_FILE):
         try:
             with open(CACHE_FILE, 'r') as f:
                 data = json.load(f)
