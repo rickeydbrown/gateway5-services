@@ -46,7 +46,7 @@
     - name: Execute show version on IOS devices
       cisco.ios.ios_command:
         commands: "show version"
-      register: state_result
+      register: ios_state_result
       when:
         - is_supported | bool
         - os_decoder[ansible_network_os] == 'ios'
@@ -55,7 +55,7 @@
     - name: Execute show version on IOS-XR devices
       cisco.iosxr.iosxr_command:
         commands: "show version"
-      register: state_result
+      register: iosxr_state_result
       when:
         - is_supported | bool
         - os_decoder[ansible_network_os] == 'iosxr'
@@ -64,7 +64,7 @@
     - name: Execute show version on ASA devices
       cisco.asa.asa_command:
         commands: "show version"
-      register: state_result
+      register: asa_state_result
       when:
         - is_supported | bool
         - os_decoder[ansible_network_os] == 'asa'
@@ -73,7 +73,7 @@
     - name: Execute show version on NX-OS devices
       cisco.nxos.nxos_command:
         commands: "show version"
-      register: state_result
+      register: nxos_state_result
       when:
         - is_supported | bool
         - os_decoder[ansible_network_os] == 'nxos'
@@ -82,7 +82,7 @@
     - name: Execute show version on EOS devices
       arista.eos.eos_command:
         commands: "show version"
-      register: state_result
+      register: eos_state_result
       when:
         - is_supported | bool
         - os_decoder[ansible_network_os] == 'eos'
@@ -91,7 +91,7 @@
     - name: Execute show version on Junos devices
       junipernetworks.junos.junos_command:
         commands: "show version"
-      register: state_result
+      register: junos_state_result
       when:
         - is_supported | bool
         - os_decoder[ansible_network_os] == 'junos'
@@ -100,7 +100,7 @@
     - name: Execute tmsh show sys version on BigIP devices
       f5networks.f5_modules.bigip_command:
         commands: "show sys version"
-      register: state_result
+      register: bigip_state_result
       when:
         - is_supported | bool
         - os_decoder[ansible_network_os] == 'bigip'
@@ -115,7 +115,7 @@
     # - name: Execute show version on SR OS devices
     #   community.network.sros_command:
     #     commands: "show version"
-    #   register: state_result
+    #   register: sros_state_result
     #   when:
     #     - is_supported | bool
     #     - os_decoder[ansible_network_os] == 'sros'
@@ -124,15 +124,28 @@
     # - name: Execute show version on Aruba devices
     #   arubanetworks.aoscx.aoscx_command:
     #     commands: ["show version"]
-    #   register: state_result
+    #   register: aruba_state_result
     #   when:
     #     - is_supported | bool
     #     - os_decoder[ansible_network_os] == 'aruba'
     #   ignore_errors: yes
 
+    - name: Set state_result based on platform
+      set_fact:
+        state_result: "{{
+          iosxr_state_result if os_decoder[ansible_network_os] == 'iosxr' else
+          ios_state_result if os_decoder[ansible_network_os] == 'ios' else
+          asa_state_result if os_decoder[ansible_network_os] == 'asa' else
+          nxos_state_result if os_decoder[ansible_network_os] == 'nxos' else
+          eos_state_result if os_decoder[ansible_network_os] == 'eos' else
+          junos_state_result if os_decoder[ansible_network_os] == 'junos' else
+          bigip_state_result if os_decoder[ansible_network_os] == 'bigip' else
+          {} }}"
+      when: is_supported | bool
+
     - name: Set alive status based on command result
       set_fact:
-        device_alive: "{{ state_result is defined and state_result.failed is defined and not state_result.failed }}"
+        device_alive: "{{ state_result is defined and not state_result.get('skipped', False) and not state_result.get('failed', False) }}"
       when: is_supported | bool
 
     - name: Set alive status to false for unsupported OS
