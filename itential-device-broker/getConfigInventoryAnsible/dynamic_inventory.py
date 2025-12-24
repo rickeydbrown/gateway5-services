@@ -65,31 +65,62 @@ def build_inventory_from_data(data):
         # Build host variables
         hostvars = {}
 
-        if 'host' in attributes:
+        # Handle host - support both 'itential_host' and 'host'
+        if 'itential_host' in attributes:
+            hostvars['ansible_host'] = attributes['itential_host']
+        elif 'host' in attributes:
             hostvars['ansible_host'] = attributes['host']
 
-        if 'username' in attributes:
+        # Handle username - support both 'itential_user' and 'username'
+        if 'itential_user' in attributes:
+            hostvars['ansible_user'] = attributes['itential_user']
+        elif 'username' in attributes:
             hostvars['ansible_user'] = attributes['username']
 
-        if 'password' in attributes:
+        # Handle password - support both 'itential_password' and 'password'
+        if 'itential_password' in attributes:
+            hostvars['ansible_password'] = attributes['itential_password']
+        elif 'password' in attributes:
             hostvars['ansible_password'] = attributes['password']
 
-        if 'port' in attributes:
+        # Handle port - support both 'itential_port' and 'port'
+        if 'itential_port' in attributes:
+            hostvars['ansible_port'] = attributes['itential_port']
+        elif 'port' in attributes:
             hostvars['ansible_port'] = attributes['port']
 
-        device_type = attributes.get('device_type') or attributes.get('ostype')
+        # Handle device type - support itential_platform, device_type, and ostype
+        device_type = (attributes.get('itential_platform') or
+                      attributes.get('device_type') or
+                      attributes.get('ostype'))
         if device_type:
             network_os = DEVICE_TYPE_MAP.get(device_type, device_type)
             hostvars['ansible_network_os'] = network_os
             hostvars['ansible_connection'] = 'ansible.netcommon.network_cli'
 
+        # Handle driver
+        if 'itential_driver' in attributes:
+            hostvars['device_driver'] = attributes['itential_driver']
+
+        # Handle command
         if 'command' in attributes:
             hostvars['device_command'] = attributes['command']
 
+        # Handle options
         if 'options' in attributes:
             hostvars['device_options'] = attributes['options']
 
         inventory["_meta"]["hostvars"][name] = hostvars
+
+        # Process tags to create Ansible groups
+        tags = node.get("tags", [])
+        for tag in tags:
+            if tag not in inventory:
+                inventory[tag] = {
+                    "hosts": [],
+                    "vars": {}
+                }
+            inventory[tag]["hosts"].append(name)
 
     return inventory
 
