@@ -106,23 +106,29 @@
         - os_decoder[ansible_network_os] == 'bigip'
       ignore_errors: yes
 
-    - name: Execute show version on SR OS devices
-      community.network.sros_command:
-        commands: "show version"
-      register: state_result
-      when:
-        - is_supported | bool
-        - os_decoder[ansible_network_os] == 'sros'
-      ignore_errors: yes
+    # Note: SR OS and Aruba require additional collections that may not be available
+    # SR OS: nokia.sros or community.network (if available)
+    # Aruba: arubanetworks.aoscx or arubanetworks.aos_switch
+    # These tasks are commented out to avoid playbook syntax errors
+    # Uncomment and update when the appropriate collections are installed
 
-    - name: Execute show version on Aruba devices
-      community.network.arubaoss_command:
-        commands: "show version"
-      register: state_result
-      when:
-        - is_supported | bool
-        - os_decoder[ansible_network_os] == 'aruba'
-      ignore_errors: yes
+    # - name: Execute show version on SR OS devices
+    #   community.network.sros_command:
+    #     commands: "show version"
+    #   register: state_result
+    #   when:
+    #     - is_supported | bool
+    #     - os_decoder[ansible_network_os] == 'sros'
+    #   ignore_errors: yes
+
+    # - name: Execute show version on Aruba devices
+    #   arubanetworks.aoscx.aoscx_command:
+    #     commands: ["show version"]
+    #   register: state_result
+    #   when:
+    #     - is_supported | bool
+    #     - os_decoder[ansible_network_os] == 'aruba'
+    #   ignore_errors: yes
 
     - name: Set alive status based on command result
       set_fact:
