@@ -97,14 +97,16 @@
       set_fact:
         clean_config: "{{ config_results.stdout[0] | regex_replace('^Building configuration\\.\\.\\.\\n', '') }}"
       when:
-        - config_results.changed is defined or config_results.failed is defined
+        - config_results.changed is defined
+        - not config_results.skipped | default(false)
         - ansible_network_os == 'iosxr'
 
     - name: Extract configuration (as-is for other platforms)
       set_fact:
         clean_config: "{{ config_results.stdout[0] }}"
       when:
-        - config_results.changed is defined or config_results.failed is defined
+        - config_results.changed is defined
+        - not config_results.skipped | default(false)
         - ansible_network_os != 'iosxr'
 
     - name: Output just the configuration
