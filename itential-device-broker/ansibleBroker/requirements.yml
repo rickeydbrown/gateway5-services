@@ -2,30 +2,21 @@
 collections:
   # Cisco collections
   - name: cisco.ios
-    version: ">=5.0.0"
   - name: cisco.iosxr
-    version: ">=5.0.0"
   - name: cisco.asa
-    version: ">=4.0.0"
   - name: cisco.nxos
-    version: ">=5.0.0"
 
   # Arista collections
   - name: arista.eos
-    version: ">=6.0.0"
 
   # Juniper collections
   - name: junipernetworks.junos
-    version: ">=5.0.0"
 
   # F5 BigIP collections
   - name: f5networks.f5_modules
-    version: ">=1.0.0"
 
-  # Nokia SR OS collections
-  - name: nokia.sros
-    version: ">=1.0.0"
+  # Nokia SR OS collections (may not be available on Galaxy)
+  # - name: nokia.sros
 
-  # Aruba collections
-  - name: arubanetworks.arubaoss
-    version: ">=1.0.0"
+  # Aruba collections (may not be available on Galaxy)
+  # - name: arubanetworks.arubaoss
