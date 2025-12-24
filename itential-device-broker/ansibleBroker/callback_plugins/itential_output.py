@@ -16,6 +16,7 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__()
         self.config_data = None
         self.device_alive = None
+        self.command_result = None
 
     def v2_runner_on_ok(self, result):
         """Capture successful task results"""
@@ -30,13 +31,30 @@ class CallbackModule(CallbackBase):
             import sys
             print(f"DEBUG: Found device_alive = {self.device_alive} (type: {type(self.device_alive)})", file=sys.stderr)
 
+        # Check for command_result (from run_command_playbook.yml command tasks)
+        # Look for stdout from network command modules
+        if 'stdout' in result._result and result._result.get('changed') == False:
+            # This looks like a command execution result
+            task_name = result._task.get_name()
+            if 'Execute command' in task_name:
+                self.command_result = result._result['stdout']
+
     def v2_playbook_on_stats(self, stats):
         """Output the appropriate data at the end"""
         import sys
-        # Priority: config_data > device_alive
+        import json
+        # Priority: config_data > command_result > device_alive
         if self.config_data is not None:
             # This was a get_config playbook
             self._display.display(self.config_data)
+        elif self.command_result is not None:
+            # This was a run_command playbook - output the command results
+            # stdout is a list, so join with newlines or output as JSON
+            if isinstance(self.command_result, list):
+                output = '\n'.join(self.command_result)
+            else:
+                output = self.command_result
+            self._display.display(output)
         elif self.device_alive is not None:
             # This was an is_alive playbook - output plain true/false WITHOUT newline
             # Use print with end='' to match Python script behavior
