@@ -65,19 +65,19 @@ def build_inventory_from_data(data):
         # Build host variables
         hostvars = {}
 
-        if 'host' in attributes:
+        if 'itential_host' in attributes:
             hostvars['ansible_host'] = attributes['host']
 
-        if 'username' in attributes:
+        if 'itential_user' in attributes:
             hostvars['ansible_user'] = attributes['username']
 
-        if 'password' in attributes:
+        if 'itential_password' in attributes:
             hostvars['ansible_password'] = attributes['password']
 
-        if 'port' in attributes:
+        if 'itential_port' in attributes:
             hostvars['ansible_port'] = attributes['port']
 
-        device_type = attributes.get('device_type') or attributes.get('ostype')
+        device_type = attributes.get('device_type') or attributes.get('itential_platform')
         if device_type:
             network_os = DEVICE_TYPE_MAP.get(device_type, device_type)
             hostvars['ansible_network_os'] = network_os
