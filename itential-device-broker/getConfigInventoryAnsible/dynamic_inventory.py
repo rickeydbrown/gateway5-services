@@ -30,6 +30,7 @@ DEVICE_TYPE_MAP = {
     'eos': 'eos',
     'ios': 'ios',
     'iosxr': 'iosxr',
+    'cisco_xr': 'iosxr',  # Map cisco_xr to iosxr for Ansible
     'junos': 'junos',
     'nxos': 'nxos',
     'sros': 'sros'
