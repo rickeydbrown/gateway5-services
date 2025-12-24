@@ -29,6 +29,24 @@
       - arista.eos.eos
       - junipernetworks.junos.junos
 
+    # OS decoder mapping
+    os_decoder:
+      'ios': 'ios'
+      'iosxr': 'iosxr'
+      'asa': 'asa'
+      'nxos': 'nxos'
+      'bigip': 'bigip'
+      'sros': 'sros'
+      'eos': 'eos'
+      'junos': 'junos'
+      'aruba': 'aruba'
+      'cisco.ios.ios': 'ios'
+      'cisco.iosxr.iosxr': 'iosxr'
+      'cisco.asa.asa': 'asa'
+      'cisco.nxos.nxos': 'nxos'
+      'arista.eos.eos': 'eos'
+      'junipernetworks.junos.junos': 'junos'
+
     # Default commands by platform
     default_commands:
       ios: "show running-config"
@@ -93,23 +111,10 @@
       when:
         - ansible_network_os == 'junos'
 
-    - name: Extract configuration (skip Building configuration line for IOS-XR)
-      set_fact:
-        clean_config: "{{ config_results.stdout[0] | regex_replace('^Building configuration\\.\\.\\.\\n', '') }}"
+    - name: Extract and output configuration
+      get_config_output:
+        config_results: "{{ config_results }}"
+        platform: "{{ os_decoder[ansible_network_os] }}"
       when:
         - config_results.changed is defined
         - not config_results.skipped | default(false)
-        - ansible_network_os == 'iosxr'
-
-    - name: Extract configuration (as-is for other platforms)
-      set_fact:
-        clean_config: "{{ config_results.stdout[0] }}"
-      when:
-        - config_results.changed is defined
-        - not config_results.skipped | default(false)
-        - ansible_network_os != 'iosxr'
-
-    - name: Output just the configuration
-      debug:
-        msg: "{{ clean_config }}"
-      when: clean_config is defined
