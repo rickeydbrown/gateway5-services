@@ -3,6 +3,9 @@ collections:
   # Base networking collections
   - name: ansible.netcommon
 
+  # Community networking collections (for older/misc platforms)
+  - name: community.network
+
   # Cisco collections
   - name: cisco.ios
   - name: cisco.iosxr
