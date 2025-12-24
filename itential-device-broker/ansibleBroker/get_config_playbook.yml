@@ -72,44 +72,56 @@
     - name: Execute config command on IOS-XR devices
       cisco.iosxr.iosxr_command:
         commands: "{{ config_command }}"
-      register: config_results
+      register: iosxr_results
       when:
         - ansible_network_os == 'iosxr'
 
     - name: Execute config command on IOS devices
       cisco.ios.ios_command:
         commands: "{{ config_command }}"
-      register: config_results
+      register: ios_results
       when:
         - ansible_network_os == 'ios'
 
     - name: Execute config command on ASA devices
       cisco.asa.asa_command:
         commands: "{{ config_command }}"
-      register: config_results
+      register: asa_results
       when:
         - ansible_network_os == 'asa'
 
     - name: Execute config command on NX-OS devices
       cisco.nxos.nxos_command:
         commands: "{{ config_command }}"
-      register: config_results
+      register: nxos_results
       when:
         - ansible_network_os == 'nxos'
 
     - name: Execute config command on EOS devices
       arista.eos.eos_command:
         commands: "{{ config_command }}"
-      register: config_results
+      register: eos_results
       when:
         - ansible_network_os == 'eos'
 
     - name: Execute config command on Junos devices
       junipernetworks.junos.junos_command:
         commands: "{{ config_command }}"
-      register: config_results
+      register: junos_results
       when:
         - ansible_network_os == 'junos'
+
+    - name: Set config_results based on platform
+      set_fact:
+        config_results: "{{
+          iosxr_results if os_decoder[ansible_network_os] == 'iosxr' else
+          ios_results if os_decoder[ansible_network_os] == 'ios' else
+          asa_results if os_decoder[ansible_network_os] == 'asa' else
+          nxos_results if os_decoder[ansible_network_os] == 'nxos' else
+          eos_results if os_decoder[ansible_network_os] == 'eos' else
+          junos_results if os_decoder[ansible_network_os] == 'junos' else
+          {} }}"
+      when: ansible_network_os in supported_os
 
     - name: Extract and output configuration
       get_config_output:
