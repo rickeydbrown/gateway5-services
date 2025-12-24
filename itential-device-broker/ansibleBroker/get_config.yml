@@ -1,0 +1,9 @@
+---
+- name: Return inventory
+  hosts: all
+  gather_facts: no
+
+  tasks:
+    - name: Display inventory variables
+      debug:
+        msg: "{{ hostvars[inventory_hostname] }}"

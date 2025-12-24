@@ -1,0 +1,106 @@
+---
+# Standalone playbook for getting device configuration
+# Converted from itential_get_config role
+#
+# Usage:
+#   ansible-playbook -i dynamic_inventory.py get_config_playbook.yml
+#   cat inventory.json | ansible-playbook -i dynamic_inventory.py get_config_playbook.yml
+
+- name: Get Configuration from Network Devices
+  hosts: all
+  gather_facts: no
+
+  vars:
+    # Supported network OS platforms
+    supported_os:
+      - ios
+      - iosxr
+      - asa
+      - nxos
+      - bigip
+      - sros
+      - eos
+      - junos
+      - aruba
+      - cisco.ios.ios
+      - cisco.iosxr.iosxr
+      - cisco.asa.asa
+      - cisco.nxos.nxos
+      - arista.eos.eos
+      - junipernetworks.junos.junos
+
+    # Default commands by platform
+    default_commands:
+      ios: "show running-config"
+      iosxr: "show running-config"
+      asa: "show running-config"
+      nxos: "show running-config"
+      bigip: "tmsh list ltm all"
+      sros: "admin display-config"
+      eos: "show running-config"
+      junos: "show configuration"
+      aruba: "show running-config"
+
+  tasks:
+    - name: Check if host is supported
+      debug:
+        msg: "Network OS: {{ ansible_network_os | default('not set') }}"
+
+    - name: Get command from host vars or use default
+      set_fact:
+        config_command: "{{ device_command | default(default_commands[ansible_network_os]) }}"
+      when: ansible_network_os in supported_os
+
+    - name: Execute config command on IOS-XR devices
+      cisco.iosxr.iosxr_command:
+        commands: "{{ config_command }}"
+      register: config_results
+      when:
+        - ansible_network_os == 'iosxr'
+
+    - name: Execute config command on IOS devices
+      cisco.ios.ios_command:
+        commands: "{{ config_command }}"
+      register: config_results
+      when:
+        - ansible_network_os == 'ios'
+
+    - name: Execute config command on ASA devices
+      cisco.asa.asa_command:
+        commands: "{{ config_command }}"
+      register: config_results
+      when:
+        - ansible_network_os == 'asa'
+
+    - name: Execute config command on NX-OS devices
+      cisco.nxos.nxos_command:
+        commands: "{{ config_command }}"
+      register: config_results
+      when:
+        - ansible_network_os == 'nxos'
+
+    - name: Execute config command on EOS devices
+      arista.eos.eos_command:
+        commands: "{{ config_command }}"
+      register: config_results
+      when:
+        - ansible_network_os == 'eos'
+
+    - name: Execute config command on Junos devices
+      junipernetworks.junos.junos_command:
+        commands: "{{ config_command }}"
+      register: config_results
+      when:
+        - ansible_network_os == 'junos'
+
+    - name: Display configuration output
+      debug:
+        var: config_results.stdout_lines[0]
+      when: config_results is defined and config_results.stdout_lines is defined
+
+    - name: Save configuration to file
+      copy:
+        content: "{{ config_results.stdout[0] }}"
+        dest: "./configs/{{ inventory_hostname }}_config.txt"
+      delegate_to: localhost
+      when: config_results is defined and config_results.stdout is defined

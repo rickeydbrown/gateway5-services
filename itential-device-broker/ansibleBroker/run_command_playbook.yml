@@ -1,0 +1,130 @@
+---
+- name: Run CLI Command on Network Devices
+  hosts: all
+  gather_facts: no
+
+  vars:
+    supported_os:
+      - ios
+      - iosxr
+      - asa
+      - nxos
+      - bigip
+      - sros
+      - eos
+      - junos
+      - aruba
+      - cisco.ios.ios
+      - cisco.iosxr.iosxr
+      - cisco.asa.asa
+      - cisco.nxos.nxos
+      - arista.eos.eos
+      - junipernetworks.junos.junos
+
+    os_decoder:
+      'ios': 'ios'
+      'iosxr': 'iosxr'
+      'asa': 'asa'
+      'nxos': 'nxos'
+      'bigip': 'bigip'
+      'sros': 'sros'
+      'eos': 'eos'
+      'junos': 'junos'
+      'aruba': 'aruba'
+      'cisco.ios.ios': 'ios'
+      'cisco.iosxr.iosxr': 'iosxr'
+      'cisco.asa.asa': 'asa'
+      'cisco.nxos.nxos': 'nxos'
+      'arista.eos.eos': 'eos'
+      'junipernetworks.junos.junos': 'junos'
+
+  tasks:
+    - name: Check if device OS is supported
+      set_fact:
+        is_supported: "{{ ansible_network_os | default(None) in supported_os }}"
+
+    - name: Get command from host vars
+      set_fact:
+        device_command: "{{ command | default(device_command | default(None)) }}"
+
+    - name: Fail if no command provided
+      fail:
+        msg: "No command specified. Please provide 'command' variable."
+      when: device_command is not defined or device_command is none
+
+    - name: Execute command on IOS devices
+      cisco.ios.ios_command:
+        commands: "{{ device_command }}"
+      register: command_result
+      when:
+        - is_supported | bool
+        - os_decoder[ansible_network_os] == 'ios'
+
+    - name: Execute command on IOS-XR devices
+      cisco.iosxr.iosxr_command:
+        commands: "{{ device_command }}"
+      register: command_result
+      when:
+        - is_supported | bool
+        - os_decoder[ansible_network_os] == 'iosxr'
+
+    - name: Execute command on ASA devices
+      cisco.asa.asa_command:
+        commands: "{{ device_command }}"
+      register: command_result
+      when:
+        - is_supported | bool
+        - os_decoder[ansible_network_os] == 'asa'
+
+    - name: Execute command on NX-OS devices
+      cisco.nxos.nxos_command:
+        commands: "{{ device_command }}"
+      register: command_result
+      when:
+        - is_supported | bool
+        - os_decoder[ansible_network_os] == 'nxos'
+
+    - name: Execute command on EOS devices
+      arista.eos.eos_command:
+        commands: "{{ device_command }}"
+      register: command_result
+      when:
+        - is_supported | bool
+        - os_decoder[ansible_network_os] == 'eos'
+
+    - name: Execute command on Junos devices
+      junipernetworks.junos.junos_command:
+        commands: "{{ device_command }}"
+      register: command_result
+      when:
+        - is_supported | bool
+        - os_decoder[ansible_network_os] == 'junos'
+
+    - name: Execute command on BigIP devices
+      bigip_command:
+        commands: "{{ device_command }}"
+      register: command_result
+      when:
+        - is_supported | bool
+        - os_decoder[ansible_network_os] == 'bigip'
+
+    - name: Execute command on SR OS devices
+      sros_command:
+        commands: "{{ device_command }}"
+      register: command_result
+      when:
+        - is_supported | bool
+        - os_decoder[ansible_network_os] == 'sros'
+
+    - name: Execute command on Aruba devices
+      arubaoss_command:
+        commands: "{{ device_command }}"
+      register: command_result
+      when:
+        - is_supported | bool
+        - os_decoder[ansible_network_os] == 'aruba'
+
+    - name: Display command output
+      debug:
+        msg: "{{ command_result.stdout_lines }}"
+      when: command_result is defined and command_result.stdout_lines is defined
