@@ -21,6 +21,14 @@ class CallbackModule(CallbackBase):
         # Check if this is the get_config_output task with config_data
         if 'config_data' in result._result:
             self.config_data = result._result['config_data']
+        # Also check for skipped tasks that might have config_data
+        elif not result._result.get('skipped', False):
+            # Debug: print task name and result keys
+            task_name = result._task.get_name()
+            if 'Extract and output configuration' in task_name or 'get_config_output' in task_name:
+                import sys
+                print(f"DEBUG: Task '{task_name}' result keys: {list(result._result.keys())}", file=sys.stderr)
+                print(f"DEBUG: Task result: {result._result}", file=sys.stderr)
 
     def v2_playbook_on_stats(self, stats):
         """Output the config_data at the end"""
