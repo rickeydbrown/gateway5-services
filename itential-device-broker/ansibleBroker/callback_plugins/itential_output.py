@@ -26,6 +26,9 @@ class CallbackModule(CallbackBase):
         # Check for device_alive (from set_fact)
         if 'ansible_facts' in result._result and 'device_alive' in result._result['ansible_facts']:
             self.device_alive = result._result['ansible_facts']['device_alive']
+            # Debug output to stderr
+            import sys
+            print(f"DEBUG: Found device_alive = {self.device_alive} (type: {type(self.device_alive)})", file=sys.stderr)
 
     def v2_playbook_on_stats(self, stats):
         """Output the appropriate data at the end"""

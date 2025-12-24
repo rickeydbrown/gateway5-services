@@ -1,0 +1,7 @@
+{
+  "ansible_network_os": "iosxr",
+  "ansible_host": "10.10.10.10",
+  "ansible_user": "admin",
+  "ansible_password": "admin",
+  "ansible_connection": "network_cli"
+}
