@@ -93,14 +93,23 @@
       when:
         - ansible_network_os == 'junos'
 
-    - name: Display configuration output
-      debug:
-        var: config_results.stdout_lines[0]
-      when: config_results is defined and config_results.stdout_lines is defined
+    - name: Extract configuration (skip Building configuration line for IOS-XR)
+      set_fact:
+        clean_config: "{{ config_results.stdout[0] | regex_replace('^Building configuration\\.\\.\\.\\n', '') }}"
+      when:
+        - config_results is defined
+        - config_results.stdout is defined
+        - ansible_network_os == 'iosxr'
 
-    - name: Save configuration to file
-      copy:
-        content: "{{ config_results.stdout[0] }}"
-        dest: "./configs/{{ inventory_hostname }}_config.txt"
-      delegate_to: localhost
-      when: config_results is defined and config_results.stdout is defined
+    - name: Extract configuration (as-is for other platforms)
+      set_fact:
+        clean_config: "{{ config_results.stdout[0] }}"
+      when:
+        - config_results is defined
+        - config_results.stdout is defined
+        - ansible_network_os != 'iosxr'
+
+    - name: Output just the configuration
+      debug:
+        msg: "{{ clean_config }}"
+      when: clean_config is defined
