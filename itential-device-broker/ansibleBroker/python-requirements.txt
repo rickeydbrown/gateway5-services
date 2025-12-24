@@ -1,0 +1,4 @@
+# Python dependencies for Ansible network automation
+paramiko>=2.7.0
+ansible-pylibssh>=1.0.0
+cryptography>=3.0
