@@ -22,8 +22,12 @@ def run_module():
     config_results = module.params['config_results']
     platform = module.params['platform']
 
+    # Handle skipped tasks - check if this task actually ran
+    if config_results.get('skipped', False):
+        module.exit_json(changed=False, skipped=True, msg='Command was skipped')
+
     if 'stdout' not in config_results or not config_results['stdout']:
-        module.fail_json(msg='No stdout found in config_results')
+        module.fail_json(msg='No stdout found in config_results', config_results=config_results)
 
     cfg_line = config_results['stdout'][0]
 
