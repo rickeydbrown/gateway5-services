@@ -59,7 +59,6 @@
       when:
         - is_supported | bool
         - os_decoder[ansible_network_os] == 'iosxr'
-      ignore_errors: yes
 
     - name: Execute show version on ASA devices
       cisco.asa.asa_command:
