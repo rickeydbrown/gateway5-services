@@ -116,5 +116,5 @@
         config_results: "{{ config_results }}"
         platform: "{{ os_decoder[ansible_network_os] }}"
       when:
-        - config_results.changed is defined
-        - not config_results.skipped | default(false)
+        - config_results.stdout is defined
+        - config_results.stdout | length > 0
