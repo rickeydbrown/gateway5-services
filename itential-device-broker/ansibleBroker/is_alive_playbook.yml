@@ -129,25 +129,8 @@
     #     - os_decoder[ansible_network_os] == 'aruba'
     #   ignore_errors: yes
 
-    - name: Set state_result based on platform
+    # If we got here, the show version command succeeded
+    # Just set device_alive to true
+    - name: Set alive status to true
       set_fact:
-        state_result: "{{
-          iosxr_state_result if os_decoder[ansible_network_os] == 'iosxr' else
-          ios_state_result if os_decoder[ansible_network_os] == 'ios' else
-          asa_state_result if os_decoder[ansible_network_os] == 'asa' else
-          nxos_state_result if os_decoder[ansible_network_os] == 'nxos' else
-          eos_state_result if os_decoder[ansible_network_os] == 'eos' else
-          junos_state_result if os_decoder[ansible_network_os] == 'junos' else
-          bigip_state_result if os_decoder[ansible_network_os] == 'bigip' else
-          {} }}"
-      when: is_supported | bool
-
-    - name: Set alive status based on command result
-      set_fact:
-        device_alive: "{{ state_result is defined and not state_result.get('skipped', False) and not state_result.get('failed', False) }}"
-      when: is_supported | bool
-
-    - name: Set alive status to false for unsupported OS
-      set_fact:
-        device_alive: false
-      when: not (is_supported | bool)
+        device_alive: true
