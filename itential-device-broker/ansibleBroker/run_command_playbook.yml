@@ -101,28 +101,34 @@
         - os_decoder[ansible_network_os] == 'junos'
 
     - name: Execute command on BigIP devices
-      bigip_command:
+      f5networks.f5_modules.bigip_command:
         commands: "{{ device_command }}"
       register: command_result
       when:
         - is_supported | bool
         - os_decoder[ansible_network_os] == 'bigip'
 
-    - name: Execute command on SR OS devices
-      sros_command:
-        commands: "{{ device_command }}"
-      register: command_result
-      when:
-        - is_supported | bool
-        - os_decoder[ansible_network_os] == 'sros'
+    # Note: SR OS and Aruba require additional collections that may not be available
+    # SR OS: nokia.sros or community.network (if available)
+    # Aruba: arubanetworks.aoscx or arubanetworks.aos_switch
+    # These tasks are commented out to avoid playbook syntax errors
+    # Uncomment and update when the appropriate collections are installed
 
-    - name: Execute command on Aruba devices
-      arubaoss_command:
-        commands: "{{ device_command }}"
-      register: command_result
-      when:
-        - is_supported | bool
-        - os_decoder[ansible_network_os] == 'aruba'
+    # - name: Execute command on SR OS devices
+    #   community.network.sros_command:
+    #     commands: "{{ device_command }}"
+    #   register: command_result
+    #   when:
+    #     - is_supported | bool
+    #     - os_decoder[ansible_network_os] == 'sros'
+
+    # - name: Execute command on Aruba devices
+    #   arubanetworks.aoscx.aoscx_command:
+    #     commands: ["{{ device_command }}"]
+    #   register: command_result
+    #   when:
+    #     - is_supported | bool
+    #     - os_decoder[ansible_network_os] == 'aruba'
 
     - name: Display command output
       debug:
