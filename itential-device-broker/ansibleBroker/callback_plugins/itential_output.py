@@ -40,5 +40,14 @@ class CallbackModule(CallbackBase):
             # This was an is_alive playbook
             self._display.display(str(self.device_alive).lower())
         else:
-            # No data found - could be an error
-            self._display.display("ERROR: No output data found", color='red')
+            # No data found - check if this was an is_alive playbook that succeeded
+            # If there are no failures, assume device is alive
+            import sys
+            if stats.failures == {} and stats.dark == {}:
+                # Playbook succeeded with no failures - device is alive
+                print("DEBUG: No device_alive found, but no failures. Outputting 'true'", file=sys.stderr)
+                self._display.display("true")
+            else:
+                # Playbook had failures - device is not alive
+                print("DEBUG: Playbook had failures. Outputting 'false'", file=sys.stderr)
+                self._display.display("false")
