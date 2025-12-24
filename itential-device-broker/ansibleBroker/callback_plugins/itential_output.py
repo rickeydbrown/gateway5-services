@@ -32,22 +32,26 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_stats(self, stats):
         """Output the appropriate data at the end"""
+        import sys
         # Priority: config_data > device_alive
         if self.config_data is not None:
             # This was a get_config playbook
             self._display.display(self.config_data)
         elif self.device_alive is not None:
-            # This was an is_alive playbook - output plain true/false
-            self._display.display(str(self.device_alive).lower())
+            # This was an is_alive playbook - output plain true/false WITHOUT newline
+            # Use print with end='' to match Python script behavior
+            print(str(self.device_alive).lower(), end='')
+            sys.stdout.flush()
         else:
             # No data found - check if this was an is_alive playbook that succeeded
             # If there are no failures, assume device is alive
-            import sys
             if stats.failures == {} and stats.dark == {}:
                 # Playbook succeeded with no failures - device is alive
                 print("DEBUG: No device_alive found, but no failures. Outputting 'true'", file=sys.stderr)
-                self._display.display("true")
+                print("true", end='')
+                sys.stdout.flush()
             else:
                 # Playbook had failures - device is not alive
                 print("DEBUG: Playbook had failures. Outputting 'false'", file=sys.stderr)
-                self._display.display("false")
+                print("false", end='')
+                sys.stdout.flush()
