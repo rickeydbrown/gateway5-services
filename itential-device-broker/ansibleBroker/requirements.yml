@@ -1,5 +1,8 @@
 ---
 collections:
+  # Base networking collections
+  - name: ansible.netcommon
+
   # Cisco collections
   - name: cisco.ios
   - name: cisco.iosxr
