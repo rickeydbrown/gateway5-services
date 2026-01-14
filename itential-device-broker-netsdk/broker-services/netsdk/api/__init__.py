@@ -5,9 +5,14 @@
 """NetSDK API package.
 
 This package provides the public API interface for NetSDK, including
-broker functions for inventory management and command execution.
+broker functions for command execution and inventory functions for
+inventory management.
 """
 
 from netsdk.api import broker
+from netsdk.api import inventory
 
-__all__ = ("broker",)
+__all__ = (
+    "broker",
+    "inventory",
+)

@@ -19,6 +19,12 @@ def _add_common_arguments(parser: argparse.ArgumentParser) -> None:
         parser: The ArgumentParser or subparser to add arguments to
     """
     parser.add_argument(
+        "--decorator",
+        action="store_true",
+        default=False,
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
         "-i",
         "--inventory",
         type=str,
@@ -169,3 +175,23 @@ def create_parser() -> argparse.ArgumentParser:
     _add_is_alive_parser(subparsers)
 
     return parser
+
+
+def get_subparser(
+    parser: argparse.ArgumentParser, command_name: str
+) -> argparse.ArgumentParser | None:
+    """Get a specific subparser by command name.
+
+    Args:
+        parser: The main ArgumentParser instance
+        command_name: The name of the subcommand to retrieve
+
+    Returns:
+        The subparser for the specified command, or None if not found
+    """
+    # Find the subparsers action
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            # Return the specific subparser
+            return action.choices.get(command_name)
+    return None

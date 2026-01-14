@@ -220,4 +220,4 @@ All dependencies are listed in `requirements.txt`.
 - The netsdk package is completely self-contained in this directory
 - No need to clone multiple repositories
 - Works on any system after installing dependencies
-- Version: 0.0.1.dev7+f05b1b3
+- Version: 0.0.1.dev+c001b0c (updated 2026-01-14)

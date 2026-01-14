@@ -150,9 +150,9 @@ async def _send_command(host: Host, commands: list[str]) -> list[CommandResult]:
                     output=output,
                     success=True,
                     host=host.host,
-                    start=start.strftime("%Y-%m-%d %H:%M:%S"),
-                    end=end.strftime("%Y-%m-%d %H:%M:%S"),
-                    elapsed=f"{elapsed:.3f}s",
+                    start_time=start.strftime("%Y-%m-%d %H:%M:%S"),
+                    end_time=end.strftime("%Y-%m-%d %H:%M:%S"),
+                    elapsed_time=f"{elapsed:.3f}s",
                 )
             )
 
@@ -352,9 +352,9 @@ async def _send_config(host: Host, commands: list[str]) -> list[CommandResult]:
                 output=output,
                 success=True,
                 host=host.host,
-                start=start.strftime("%Y-%m-%d %H:%M:%S"),
-                end=end.strftime("%Y-%m-%d %H:%M:%S"),
-                elapsed=f"{elapsed:.3f}s",
+                start_time=start.strftime("%Y-%m-%d %H:%M:%S"),
+                end_time=end.strftime("%Y-%m-%d %H:%M:%S"),
+                elapsed_time=f"{elapsed:.3f}s",
             )
         )
 
@@ -482,9 +482,9 @@ async def is_alive(host: Host) -> PingResult:
             alive=alive,
             success=True,
             host=host.host,
-            start=start.strftime("%Y-%m-%d %H:%M:%S"),
-            end=end.strftime("%Y-%m-%d %H:%M:%S"),
-            elapsed=f"{elapsed:.3f}s",
+            start_time=start.strftime("%Y-%m-%d %H:%M:%S"),
+            end_time=end.strftime("%Y-%m-%d %H:%M:%S"),
+            elapsed_time=f"{elapsed:.3f}s",
         )
 
     except asyncio.CancelledError:

@@ -14,4 +14,4 @@ Module Variables:
 
 name: str = "netsdk"
 author: str = "Itential"
-version: str = "0.0.1.dev7+f05b1b3"  # Hardcoded version for portable distribution
+version: str = "0.0.1.dev+c001b0c"  # Hardcoded version for portable distribution (updated 2026-01-14)

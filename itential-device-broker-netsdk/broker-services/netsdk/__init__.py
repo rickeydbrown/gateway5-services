@@ -14,7 +14,9 @@ for managing large inventories of network devices in parallel.
 
 Example:
     import asyncio
+    import json
     from netsdk import broker
+    from netsdk import inventory
     from netsdk import logging
 
     # Initialize logging (must be done explicitly)
@@ -34,17 +36,19 @@ Example:
         }]
     }
 
-    inventory = broker.load_inventory(inventory_data["inventory_nodes"])
-    result = asyncio.run(broker.run_command(inventory, ["show version"]))
+    inv = inventory.load_inventory(json.dumps(inventory_data))
+    result = asyncio.run(broker.run_command(inv, ["show version"]))
 """
 
 from netsdk import metadata
 from netsdk.api import broker
+from netsdk.api import inventory
 from netsdk.utils import logging
 
 __all__ = (
     "__version__",
     "broker",
+    "inventory",
     "logging",
 )
 
