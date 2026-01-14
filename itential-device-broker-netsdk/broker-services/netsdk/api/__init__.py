@@ -8,30 +8,10 @@ This package provides the public API interface for NetSDK, including
 broker functions for inventory management and command execution.
 """
 
-# Import broker immediately
 from netsdk.api import broker
 
-# Lazy load inventory to avoid circular imports
-_inventory = None
+# Note: inventory module is imported by netsdk/__init__.py directly
+# to avoid circular import issues. This is a workaround for portable
+# distributions where the package is not installed via pip.
 
-def __getattr__(name):
-    """Lazy import inventory module on first access."""
-    global _inventory
-    if name == "inventory":
-        if _inventory is None:
-            # Import using the full module path to avoid circular issues
-            import sys
-            import importlib.util
-            from pathlib import Path
-
-            # Get the inventory.py file path
-            inventory_file = Path(__file__).parent / "inventory.py"
-
-            # Load it as a module
-            spec = importlib.util.spec_from_file_location("netsdk.api.inventory", inventory_file)
-            module = importlib.util.module_from_spec(spec)
-            sys.modules['netsdk.api.inventory'] = module
-            spec.loader.exec_module(module)
-            _inventory = module
-        return _inventory
-    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+__all__ = ("broker",)
