@@ -335,13 +335,67 @@ try:
     # Create alias for backwards compatibility
     load_inventory = load
 except ImportError:
-    # If inventory module doesn't exist, provide error message
-    def load_inventory(*args, **kwargs):
-        raise ImportError(
-            "inventory module not available. "
-            "This may occur if inventory.py was not included in the deployment."
-        )
-    load = load_inventory
-    load_from_file = load_inventory
-    load_from_stdin = load_inventory
-    loads = load_inventory
+    # If inventory module doesn't exist, inline the inventory functions here
+    # This ensures broker.py works standalone when inventory.py is not copied
+    import sys as _sys
+    from pathlib import Path as _Path
+    from netsdk.utils.json import loads
+
+    STDIN_TIMEOUT = 10.0
+
+    async def _read_stdin_with_timeout(timeout: float = STDIN_TIMEOUT) -> str:
+        """Read from stdin with a timeout."""
+        return await asyncio.wait_for(asyncio.to_thread(_sys.stdin.read), timeout=timeout)
+
+    def _validate_inventory_structure(data: dict) -> None:
+        """Validate inventory data structure."""
+        if not isinstance(data, dict):
+            msg = (
+                f"Inventory must be a JSON object, got {type(data).__name__}. "
+                "Expected format: {'inventory_nodes': [...]}"
+            )
+            raise TypeError(msg)
+
+        if "inventory_nodes" not in data:
+            msg = (
+                "Inventory missing required field 'inventory_nodes'. "
+                "Expected format: {'inventory_nodes': [...]}"
+            )
+            raise ValueError(msg)
+
+        inventory_nodes = data["inventory_nodes"]
+        if not isinstance(inventory_nodes, list):
+            msg = (
+                f"'inventory_nodes' must be a list, got {type(inventory_nodes).__name__}. "
+                "Expected format: {'inventory_nodes': [...]}"
+            )
+            raise TypeError(msg)
+
+    def load(source: dict | str) -> Inventory:
+        """Load inventory from a Python dict, JSON string, or file path."""
+        if isinstance(source, str):
+            if source.startswith("@"):
+                return load_from_file(source[1:])
+            data = loads(source)
+            _validate_inventory_structure(data)
+            return Inventory(data["inventory_nodes"])
+        _validate_inventory_structure(source)
+        return Inventory(source["inventory_nodes"])
+
+    def load_from_file(file_path: str | _Path) -> Inventory:
+        """Load inventory from a JSON file."""
+        inventory_path = _Path(file_path)
+        if not inventory_path.exists():
+            msg = f"Inventory file not found: {file_path}"
+            raise FileNotFoundError(msg)
+        data = loads(inventory_path.read_text())
+        return load(data)
+
+    def load_from_stdin(stdin_timeout: float = STDIN_TIMEOUT) -> Inventory:
+        """Load inventory from stdin."""
+        stdin_data = asyncio.run(_read_stdin_with_timeout(stdin_timeout))
+        data = loads(stdin_data)
+        return load(data)
+
+    # Create alias for backwards compatibility
+    load_inventory = load
