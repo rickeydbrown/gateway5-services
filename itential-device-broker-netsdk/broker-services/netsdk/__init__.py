@@ -42,8 +42,7 @@ Example:
 
 from netsdk import metadata
 from netsdk.api import broker
-from netsdk.api.inventory import *  # Import inventory functions directly from the module file
-import netsdk.api.inventory as inventory  # Make inventory module available
+from netsdk.api import inventory
 from netsdk.utils import logging
 
 __all__ = (
