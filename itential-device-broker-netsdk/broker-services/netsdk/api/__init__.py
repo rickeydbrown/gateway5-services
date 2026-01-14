@@ -9,8 +9,16 @@ broker functions for command execution and inventory functions for
 inventory management.
 """
 
-from netsdk.api import broker
-from netsdk.api import inventory
+# Use lazy imports to avoid circular import issues
+# Import submodules by their actual module name, not from parent
+import importlib
+
+def __getattr__(name):
+    """Lazy import API modules to avoid circular imports."""
+    if name in ("broker", "inventory"):
+        # Import the module directly without going through netsdk.api
+        return importlib.import_module(f".{name}", __name__)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __all__ = (
     "broker",
