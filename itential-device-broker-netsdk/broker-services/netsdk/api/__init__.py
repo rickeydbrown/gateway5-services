@@ -5,22 +5,9 @@
 """NetSDK API package.
 
 This package provides the public API interface for NetSDK, including
-broker functions for command execution and inventory functions for
-inventory management.
+broker functions for inventory management and command execution.
 """
 
-# Use lazy imports to avoid circular import issues
-# Import submodules by their actual module name, not from parent
-import importlib
+from netsdk.api import broker
 
-def __getattr__(name):
-    """Lazy import API modules to avoid circular imports."""
-    if name in ("broker", "inventory"):
-        # Import the module directly without going through netsdk.api
-        return importlib.import_module(f".{name}", __name__)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-__all__ = (
-    "broker",
-    "inventory",
-)
+__all__ = ("broker",)
