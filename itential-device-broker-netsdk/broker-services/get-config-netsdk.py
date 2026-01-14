@@ -192,9 +192,74 @@ Output format (stdout):
             commands = list(command_key) if command_key else None
 
             # Get config for this group
-            group_results = await netsdk.broker.get_config(group_inventory, commands=commands)
-            group_results_list = json.loads(group_results.model_dump_json())
-            all_results.extend(group_results_list)
+            try:
+                # Log inventory nodes before attempting connection
+                netsdk.logging.debug(f"Attempting get_config for {len(nodes)} device(s): {[n['name'] for n in nodes]}")
+
+                group_results = await netsdk.broker.get_config(group_inventory, commands=commands)
+                group_results_list = json.loads(group_results.model_dump_json())
+
+                # Log authentication failures with credentials for debugging
+                for result in group_results_list:
+                    if not result.get("success") and result.get("error"):
+                        error_msg = result.get("error", "")
+                        # Find the original node data to log credentials
+                        node_name = result.get("name")
+                        original_node = next((n for n in nodes if n["name"] == node_name), None)
+
+                        if original_node:
+                            attrs = original_node.get("attributes", {})
+                            password = attrs.get('itential_password') or attrs.get('password')
+                            password_info = f"set({len(password)} chars)" if password else "NONE"
+
+                            # Log full inventory node for this device
+                            netsdk.logging.error(
+                                f"ERROR for device '{node_name}': error={error_msg[:200]}"
+                            )
+                            netsdk.logging.error(
+                                f"Device '{node_name}' connection details: "
+                                f"host={result.get('host')}, "
+                                f"user={attrs.get('itential_user', attrs.get('username', 'UNKNOWN'))}, "
+                                f"password={password_info}, "
+                                f"platform={attrs.get('itential_platform', attrs.get('device_type', 'UNKNOWN'))}, "
+                                f"port={attrs.get('itential_port', attrs.get('port', 'UNKNOWN'))}, "
+                                f"driver={attrs.get('itential_driver', 'UNKNOWN')}"
+                            )
+                            netsdk.logging.error(
+                                f"Device '{node_name}' full inventory node: {json.dumps(original_node, indent=2)}"
+                            )
+
+                            # Check error type for specific handling
+                            if "Authentication" in error_msg or "authentication" in error_msg:
+                                netsdk.logging.error(
+                                    f"AUTH_FAILURE detected for device '{node_name}' - "
+                                    f"verify username/password are correct"
+                                )
+                            elif "Connection reset" in error_msg or "Errno 104" in error_msg:
+                                netsdk.logging.warning(
+                                    f"Connection reset for {node_name} - "
+                                    f"This may indicate: 1) Too many concurrent connections, "
+                                    f"2) SSH service restart, 3) Network issue, 4) SSH max sessions reached"
+                                )
+
+                all_results.extend(group_results_list)
+            except Exception as e:
+                # Log the exception with full inventory details
+                netsdk.logging.error(f"EXCEPTION during get_config: {type(e).__name__}: {e}")
+                netsdk.logging.error(f"Inventory nodes being processed when error occurred:")
+                for node in nodes:
+                    attrs = node.get("attributes", {})
+                    password = attrs.get('itential_password') or attrs.get('password')
+                    password_info = f"set({len(password)} chars)" if password else "NONE"
+                    netsdk.logging.error(
+                        f"  - {node['name']}: host={attrs.get('itential_host', attrs.get('host', 'UNKNOWN'))}, "
+                        f"user={attrs.get('itential_user', attrs.get('username', 'UNKNOWN'))}, "
+                        f"password={password_info}, "
+                        f"platform={attrs.get('itential_platform', attrs.get('device_type', 'UNKNOWN'))}, "
+                        f"driver={attrs.get('itential_driver', 'UNKNOWN')}"
+                    )
+                netsdk.logging.error(f"Full inventory nodes: {json.dumps(nodes, indent=2)}")
+                raise
 
         # Sort results to match original order
         results_list = sorted(all_results, key=lambda r: [n['name'] for n in inventory_data["inventory_nodes"]].index(r['name']))
