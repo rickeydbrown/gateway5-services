@@ -321,3 +321,27 @@ async def is_alive(
     results = await asyncio.gather(*tasks)
 
     return PingResponse(results)
+
+
+# Import inventory functions to maintain backwards compatibility
+# The inventory module may not be available in all deployments, so we import
+# the functions here to make them accessible via netsdk.broker.load_inventory()
+try:
+    from netsdk.api.inventory import load
+    from netsdk.api.inventory import load_from_file
+    from netsdk.api.inventory import load_from_stdin
+    from netsdk.api.inventory import loads
+
+    # Create alias for backwards compatibility
+    load_inventory = load
+except ImportError:
+    # If inventory module doesn't exist, provide error message
+    def load_inventory(*args, **kwargs):
+        raise ImportError(
+            "inventory module not available. "
+            "This may occur if inventory.py was not included in the deployment."
+        )
+    load = load_inventory
+    load_from_file = load_inventory
+    load_from_stdin = load_inventory
+    loads = load_inventory
