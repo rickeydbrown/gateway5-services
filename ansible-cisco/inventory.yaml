@@ -7,3 +7,9 @@ all:
       ansible_connection: network_cli
       ansible_network_os: iosxr
       ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      # Force Paramiko to use password auth, not keyboard-interactive
+      ansible_paramiko_use_agent: false
+      ansible_paramiko_host_key_checking: false
+      # Network CLI specific settings
+      ansible_command_timeout: 60
+      ansible_connect_timeout: 60
