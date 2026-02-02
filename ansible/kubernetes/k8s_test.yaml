@@ -1,0 +1,5 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: K8s Cluster Info
+      kubernetes.core.k8s_cluster_info: {}
