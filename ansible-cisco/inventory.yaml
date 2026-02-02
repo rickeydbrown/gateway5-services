@@ -1,15 +1,19 @@
 all:
+  vars:
+    # Global settings to force password-only authentication
+    ansible_host_key_checking: false
+    ansible_command_timeout: 60
+    ansible_connect_timeout: 60
   hosts:
     ios_device:
       ansible_host: 10.102.156.5  # Replace with your device IP
       ansible_user: iag
       ansible_password: iagpass
-      ansible_connection: network_cli
-      ansible_network_os: iosxr
-      ansible_ssh_common_args: '-o PreferredAuthentications=password'
-      # Force Paramiko to use password auth, not keyboard-interactive
+      ansible_connection: ansible.netcommon.network_cli
+      ansible_network_os: cisco.ios.iosxr
+      # Force libssh instead of paramiko - has better password auth handling
+      ansible_network_cli_ssh_type: libssh
+      # Or force paramiko with explicit settings
+      # ansible_network_cli_ssh_type: paramiko
+      ansible_paramiko_look_for_keys: false
       ansible_paramiko_use_agent: false
-      ansible_paramiko_host_key_checking: false
-      # Network CLI specific settings
-      ansible_command_timeout: 60
-      ansible_connect_timeout: 60
