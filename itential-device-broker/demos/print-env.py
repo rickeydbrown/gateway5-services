@@ -2,18 +2,6 @@ import sys
 import json
 import argparse
 
-DEVICE_TYPES = {
-    'aruba': 'aruba_os',
-    'asa': 'cisco_asa',
-    'bigip': 'f5_ltm',
-    'eos': 'arista_eos',
-    'ios': 'cisco_ios',
-    'iosxr': 'cisco_xr',
-    'junos': 'juniper_junos',
-    'nxos': 'cisco_nxos',
-    'sros': 'nokia_sros'
-}
-
 DEFAULT_CONNECTION_PARAMS = {
     "conn_timeout": 30,
     "auth_timeout": 30,
@@ -65,20 +53,17 @@ try:
         device_name = device_info.get('name', 'unknown')
         attributes = device_info.get('attributes', {})
 
-        # Extract parameters
-        host = attributes.get('host')
-        username = attributes.get('username')
-        password = attributes.get('password')
-        device_type = attributes.get('device_type') or attributes.get('ostype')
-        port = attributes.get('port', 22)
-        secret = attributes.get('secret')
-
-        # Use mapped device type if available, otherwise use incoming device_type directly
-        netmiko_device_type = DEVICE_TYPES.get(device_type, device_type)
+        # Extract parameters - using only itential_* attributes
+        host = attributes.get('itential_host')
+        username = attributes.get('itential_user')
+        password = attributes.get('itential_password')
+        device_type = attributes.get('itential_platform')
+        port = attributes.get('itential_port', 22)
+        secret = attributes.get('itential_secret')
 
         # Build device connection dictionary with defaults
         device_params = {
-            'device_type': netmiko_device_type,
+            'device_type': device_type,
             'host': host,
             'username': username,
             'password': password,
