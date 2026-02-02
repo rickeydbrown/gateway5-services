@@ -2,6 +2,10 @@
 - name: get-config
   gather_facts: false
   hosts: ios_device
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+
+
   tasks:
     - name: Get config for IOS devices
       cisco.iosxr.iosxr_command:
