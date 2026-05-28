@@ -22,4 +22,4 @@ collections:
   - name: f5networks.f5_modules
 
   # HashiCorp Vault collections
-  - name: community.hashi_vault
+  - name: community.hashi_vault.hashi_vault
