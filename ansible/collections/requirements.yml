@@ -20,3 +20,6 @@ collections:
 
   # F5 BigIP collections
   - name: f5networks.f5_modules
+
+  # HashiCorp Vault collections
+  - name: community.hashi_vault
