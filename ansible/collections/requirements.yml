@@ -1,0 +1,22 @@
+---
+collections:
+  # Base networking collections
+  - name: ansible.netcommon
+
+  # Community networking collections (for older/misc platforms)
+  - name: community.network
+
+  # Cisco collections
+  - name: cisco.ios
+  - name: cisco.iosxr
+  - name: cisco.asa
+  - name: cisco.nxos
+
+  # Arista collections
+  - name: arista.eos
+
+  # Juniper collections
+  - name: junipernetworks.junos
+
+  # F5 BigIP collections
+  - name: f5networks.f5_modules

@@ -1,0 +1,17 @@
+---
+# Usage:
+#   ansible-playbook ansible/collections/install_collections.yml
+
+- name: Install and List Ansible Collections
+  hosts: localhost
+  gather_facts: no
+  connection: local
+
+  tasks:
+    - name: List installed collections
+      command: ansible-galaxy collection list
+      register: collections_list
+
+    - name: Print installed collections
+      debug:
+        msg: "{{ collections_list.stdout_lines }}"
