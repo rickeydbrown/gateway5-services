@@ -26,3 +26,15 @@
       debug:
         msg: "WARNING: ANSIBLE_COLLECTIONS_PATH is not set - requirements.yml was likely not found"
       when: lookup('env', 'ANSIBLE_COLLECTIONS_PATH') == ''
+
+    - name: Get venv bin path
+      ansible.builtin.command: which ansible-playbook
+      register: ap_path
+
+    - name: List all installed collections
+      ansible.builtin.command: "{{ ap_path.stdout | dirname }}/ansible-galaxy collection list"
+      register: col_list
+
+    - name: Show collections
+      ansible.builtin.debug:
+        msg: "{{ col_list.stdout_lines }}"
