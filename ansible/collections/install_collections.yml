@@ -1,17 +1,28 @@
 ---
-# Usage:
-#   ansible-playbook ansible/collections/install_collections.yml
-
-- name: Install and List Ansible Collections
+- name: Diagnose Ansible Collections Path
   hosts: localhost
   gather_facts: no
   connection: local
 
   tasks:
-    - name: List installed collections
-      command: ansible-galaxy collection list
-      register: collections_list
-
-    - name: Print installed collections
+    - name: Show ANSIBLE_COLLECTIONS_PATH set by iagctl
       debug:
-        msg: "{{ collections_list.stdout_lines }}"
+        msg: "ANSIBLE_COLLECTIONS_PATH = {{ lookup('env', 'ANSIBLE_COLLECTIONS_PATH') }}"
+
+    - name: List collection directories at that path
+      find:
+        paths: "{{ lookup('env', 'ANSIBLE_COLLECTIONS_PATH') }}"
+        file_type: directory
+        recurse: no
+      register: col_dirs
+      when: lookup('env', 'ANSIBLE_COLLECTIONS_PATH') != ''
+
+    - name: Print found collection directories
+      debug:
+        msg: "{{ col_dirs.files | map(attribute='path') | list }}"
+      when: lookup('env', 'ANSIBLE_COLLECTIONS_PATH') != ''
+
+    - name: Warn if ANSIBLE_COLLECTIONS_PATH is not set
+      debug:
+        msg: "WARNING: ANSIBLE_COLLECTIONS_PATH is not set - requirements.yml was likely not found"
+      when: lookup('env', 'ANSIBLE_COLLECTIONS_PATH') == ''
