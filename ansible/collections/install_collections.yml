@@ -27,14 +27,25 @@
         msg: "WARNING: ANSIBLE_COLLECTIONS_PATH is not set - requirements.yml was likely not found"
       when: lookup('env', 'ANSIBLE_COLLECTIONS_PATH') == ''
 
-    - name: Get venv bin path
-      ansible.builtin.command: which ansible-playbook
-      register: ap_path
+    - name: Check if community.hashi_vault is in iagctl's hash dir
+      ansible.builtin.stat:
+        path: "{{ lookup('env', 'ANSIBLE_COLLECTIONS_PATH') }}/ansible_collections/community/hashi_vault"
+      register: hashi_stat
 
-    - name: List all installed collections
-      ansible.builtin.command: "{{ ap_path.stdout | dirname }}/ansible-galaxy collection list"
-      register: col_list
+    - name: Assert collection is present
+      ansible.builtin.assert:
+        that: hashi_stat.stat.exists
+        success_msg: "community.hashi_vault found at {{ lookup('env', 'ANSIBLE_COLLECTIONS_PATH') }}"
+        fail_msg: "community.hashi_vault NOT in hash dir — collections not installed correctly"
 
-    - name: Show collections
+    - name: Get community.hashi_vault version
+      ansible.builtin.command: >
+        {{ lookup('env', 'ANSIBLE_COLLECTIONS_PATH') | dirname | dirname }}/bin/ansible-galaxy
+        collection list community.hashi_vault
+      register: hashi_version
+      when: hashi_stat.stat.exists
+
+    - name: Show version
       ansible.builtin.debug:
-        msg: "{{ col_list.stdout_lines }}"
+        msg: "{{ hashi_version.stdout_lines }}"
+      when: hashi_stat.stat.exists
