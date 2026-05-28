@@ -1,2 +1,1 @@
-ansible-core>=2.14,<2.16
-hvac
+ansible-core
