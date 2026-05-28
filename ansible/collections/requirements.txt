@@ -1,1 +1,1 @@
-ansible-core
+ansible
