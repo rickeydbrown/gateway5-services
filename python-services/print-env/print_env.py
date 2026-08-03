@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """
 Print Env Service
-Prints the Python version, interpreter executable path, and (if running
-inside a virtual environment) the venv's executable path.
+Prints the Python version, interpreter executable path, (if running
+inside a virtual environment) the venv's executable path, and the
+location of the installed netmiko package.
 
 Usage:
     ./print_env.py
 """
 
 import sys
+
+import netmiko
 
 
 def main():
@@ -20,6 +23,8 @@ def main():
         print(f"Venv executable path: {sys.executable}")
     else:
         print("Not running inside a virtual environment")
+
+    print(f"Netmiko package path: {netmiko.__file__}")
 
 
 if __name__ == "__main__":
