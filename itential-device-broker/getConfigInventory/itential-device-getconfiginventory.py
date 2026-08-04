@@ -54,12 +54,12 @@ def get_device_config(device_name, attributes, command=None, delay=0):
 
     try:
         # Extract parameters from attributes
-        host = attributes.get('host')
-        username = attributes.get('username')
-        password = attributes.get('password')
-        device_type = attributes.get('device_type') or attributes.get('ostype')
-        port = attributes.get('port', 22)
-        secret = attributes.get('secret')
+        host = attributes.get('itential_host')
+        username = attributes.get('itential_user')
+        password = attributes.get('itential_password')
+        device_type = attributes.get('itential_platform') or attributes.get('ostype')
+        port = attributes.get('itential_port', 22)
+        # secret = attributes.get('secret')
 
         # Command priority: 1) device attribute, 2) CLI argument, 3) default
         device_command = attributes.get('command') or attributes.get('cmd')
