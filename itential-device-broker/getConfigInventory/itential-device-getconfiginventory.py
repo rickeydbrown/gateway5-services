@@ -59,7 +59,7 @@ def get_device_config(device_name, attributes, command=None, delay=0):
         password = attributes.get('itential_password')
         device_type = attributes.get('itential_platform') or attributes.get('ostype')
         port = attributes.get('itential_port', 22)
-        # secret = attributes.get('secret')
+        secret = attributes.get('secret')
 
         # Command priority: 1) device attribute, 2) CLI argument, 3) default
         device_command = attributes.get('command') or attributes.get('cmd')
