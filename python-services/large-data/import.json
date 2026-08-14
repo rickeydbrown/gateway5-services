@@ -1,0 +1,71 @@
+{
+  "decorators": [
+    {
+      "name": "dot1x-large-data",
+      "schema": {
+        "$id": "root",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Dot1x Troubleshoot Large-Data Input Schema",
+        "description": "Exercises the proposed x-itential-payload-type file decorator convention. Large results (pre-check, dot1x session detail, running-config) are written by Gateway 5 to temp files and passed to the script as env vars instead of inline payload fields, then cleaned up after execution.",
+        "type": "object",
+        "properties": {
+          "target_device": {
+            "type": "string",
+            "description": "Name/identifier of the device being troubleshot"
+          },
+          "network_os": {
+            "type": "string",
+            "description": "Device OS/platform, used to select the right parsing logic"
+          },
+          "pre_check_success": {
+            "type": "boolean",
+            "description": "Whether the upstream pre-check task passed"
+          },
+          "pre_check_result_json": {
+            "type": "string",
+            "description": "Pre-check results, written to a temp file by Gateway 5 rather than inlined",
+            "x-itential-payload-type": "file",
+            "x-itential-payload-target": "PRE_CHECK_RESULT_FILE"
+          },
+          "dot1x_detail_result_json": {
+            "type": "string",
+            "description": "Full dot1x session detail (potentially thousands of entries), written to a temp file by Gateway 5 rather than inlined",
+            "x-itential-payload-type": "file",
+            "x-itential-payload-target": "DOT1X_DETAIL_RESULT_FILE"
+          },
+          "running_config_result_json": {
+            "type": "string",
+            "description": "Full running-config (can be MBs of text), written to a temp file by Gateway 5 rather than inlined",
+            "x-itential-payload-type": "file",
+            "x-itential-payload-target": "RUNNING_CONFIG_RESULT_FILE"
+          }
+        },
+        "required": [
+          "target_device",
+          "network_os",
+          "pre_check_result_json",
+          "dot1x_detail_result_json",
+          "running_config_result_json"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ],
+  "repositories": [],
+  "services": [
+    {
+      "name": "itential-large-data-test",
+      "type": "python-script",
+      "description": "Cross-references dot1x-enabled interfaces against live session state using large-data payloads passed as files rather than inline decorator fields.",
+      "filename": "large-data-test.py",
+      "working-directory": "python-services/large-data",
+      "repository": "gateway5-services",
+      "decorator": "dot1x-large-data",
+      "tags": [
+        "demo",
+        "large-data"
+      ],
+      "runtime": {}
+    }
+  ]
+}
