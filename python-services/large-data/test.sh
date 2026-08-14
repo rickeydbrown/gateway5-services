@@ -52,26 +52,26 @@ echo ""
 echo "=================================================="
 echo "Test 1: Pre-fix behavior - inline argparse values"
 echo "=================================================="
-./large-data-test.py --target-device sw-access-42 --network-os ios --pre-check-success \
-  --pre-check-result-json '{"checks": [{"name": "reachability", "status": "pass"}]}' \
-  --dot1x-detail-result-json '{"sessions": [{"interface": "Gi1/0/1", "auth_state": "AUTHORIZED"}]}' \
-  --running-config-result-json '{"hostname": "sw-access-42", "interfaces": []}' \
+./large-data-test.py --target_device sw-access-42 --network_os ios --pre_check_success \
+  --pre_check_result_json '{"checks": [{"name": "reachability", "status": "pass"}]}' \
+  --dot1x_detail_result_json '{"sessions": [{"interface": "Gi1/0/1", "auth_state": "AUTHORIZED"}]}' \
+  --running_config_result_json '{"hostname": "sw-access-42", "interfaces": []}' \
   | grep -E "_source|_size_bytes" || true
 
 echo ""
 echo "=================================================="
 echo "Test 2: Post-fix behavior - env-var file-backed values, JSON output"
 echo "=================================================="
-./large-data-test.py --target-device sw-access-42 --network-os ios --pre-check-success || true
+./large-data-test.py --target_device sw-access-42 --network_os ios --pre_check_success || true
 
 echo ""
 echo "=================================================="
 echo "Test 3: Post-fix behavior - text output"
 echo "=================================================="
-./large-data-test.py --target-device sw-access-42 --network-os ios --pre-check-success --format text || true
+./large-data-test.py --target_device sw-access-42 --network_os ios --pre_check_success --format text || true
 
 echo ""
 echo "=================================================="
 echo "Test 4: Neither argparse nor env var set (Gateway 5 failed to stage a file)"
 echo "=================================================="
-env -u RUNNING_CONFIG_RESULT_FILE ./large-data-test.py --target-device sw-access-42 --network-os ios || true
+env -u RUNNING_CONFIG_RESULT_FILE ./large-data-test.py --target_device sw-access-42 --network_os ios || true

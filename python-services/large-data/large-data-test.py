@@ -16,16 +16,16 @@ This script does no processing - it just proves the args and files came
 through intact by returning them as-is.
 
 Usage (pre-fix, inline args):
-    ./large-data-test.py --target-device sw-access-42 --network-os ios \\
-        --pre-check-result-json '{"checks": []}' \\
-        --dot1x-detail-result-json '{"sessions": []}' \\
-        --running-config-result-json '{"interfaces": []}'
+    ./large-data-test.py --target_device sw-access-42 --network_os ios \\
+        --pre_check_result_json '{"checks": []}' \\
+        --dot1x_detail_result_json '{"sessions": []}' \\
+        --running_config_result_json '{"interfaces": []}'
 
 Usage (post-fix, file-backed via env vars):
     export PRE_CHECK_RESULT_FILE=/tmp/pre_check.json
     export DOT1X_DETAIL_RESULT_FILE=/tmp/dot1x_detail.json
     export RUNNING_CONFIG_RESULT_FILE=/tmp/running_config.json
-    ./large-data-test.py --target-device sw-access-42 --network-os ios --pre-check-success
+    ./large-data-test.py --target_device sw-access-42 --network_os ios --pre_check_success
 """
 
 import argparse
@@ -58,8 +58,7 @@ def load_large_entry(name, arg_value, env_var):
     path = os.environ.get(env_var)
     if not path:
         raise RuntimeError(
-            f"'{name}' was not passed via --{name.replace('_', '-')}-json "
-            f"and '{env_var}' is not set"
+            f"'{name}' was not passed via --{name}_json and '{env_var}' is not set"
         )
     if not os.path.isfile(path):
         raise RuntimeError(f"'{env_var}' points to a file that does not exist: {path}")
@@ -70,12 +69,12 @@ def load_large_entry(name, arg_value, env_var):
 
 def main():
     parser = argparse.ArgumentParser(description="Large-data payload exercise")
-    parser.add_argument("--target-device", required=True)
-    parser.add_argument("--network-os", required=True)
-    parser.add_argument("--pre-check-success", action="store_true")
-    parser.add_argument("--pre-check-result-json")
-    parser.add_argument("--dot1x-detail-result-json")
-    parser.add_argument("--running-config-result-json")
+    parser.add_argument("--target_device", required=True)
+    parser.add_argument("--network_os", required=True)
+    parser.add_argument("--pre_check_success", action="store_true")
+    parser.add_argument("--pre_check_result_json")
+    parser.add_argument("--dot1x_detail_result_json")
+    parser.add_argument("--running_config_result_json")
     parser.add_argument("--format", choices=["json", "text"], default="json")
     args = parser.parse_args()
 
