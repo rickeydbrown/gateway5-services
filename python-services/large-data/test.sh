@@ -50,18 +50,28 @@ ls -lh "$WORKDIR"
 
 echo ""
 echo "=================================================="
-echo "Test 1: Happy path, JSON output"
+echo "Test 1: Pre-fix behavior - inline argparse values"
+echo "=================================================="
+./large-data-test.py --target-device sw-access-42 --network-os ios --pre-check-success \
+  --pre-check-result-json '{"checks": [{"name": "reachability", "status": "pass"}]}' \
+  --dot1x-detail-result-json '{"sessions": [{"interface": "Gi1/0/1", "auth_state": "AUTHORIZED"}]}' \
+  --running-config-result-json '{"hostname": "sw-access-42", "interfaces": []}' \
+  | grep -E "_source|_size_bytes" || true
+
+echo ""
+echo "=================================================="
+echo "Test 2: Post-fix behavior - env-var file-backed values, JSON output"
 echo "=================================================="
 ./large-data-test.py --target-device sw-access-42 --network-os ios --pre-check-success || true
 
 echo ""
 echo "=================================================="
-echo "Test 2: Text output"
+echo "Test 3: Post-fix behavior - text output"
 echo "=================================================="
 ./large-data-test.py --target-device sw-access-42 --network-os ios --pre-check-success --format text || true
 
 echo ""
 echo "=================================================="
-echo "Test 3: Missing env var (Gateway 5 failed to stage a file)"
+echo "Test 4: Neither argparse nor env var set (Gateway 5 failed to stage a file)"
 echo "=================================================="
 env -u RUNNING_CONFIG_RESULT_FILE ./large-data-test.py --target-device sw-access-42 --network-os ios || true
