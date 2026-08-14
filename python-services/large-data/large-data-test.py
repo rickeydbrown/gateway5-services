@@ -49,11 +49,12 @@ LARGE_ENTRIES = {
 def load_large_entry(name, arg_value, env_var):
     """Resolve a large entry from argparse (pre-fix) or an env-var file (post-fix).
 
-    Returns the parsed contents, its size in bytes, and where it came from.
+    The schema types these as plain strings, so the raw text is returned
+    as-is (no JSON parsing) along with its size in bytes and where it came
+    from.
     """
     if arg_value:
-        size_bytes = len(arg_value.encode("utf-8"))
-        return json.loads(arg_value), size_bytes, "argparse"
+        return arg_value, len(arg_value.encode("utf-8")), "argparse"
 
     path = os.environ.get(env_var)
     if not path:
@@ -62,9 +63,9 @@ def load_large_entry(name, arg_value, env_var):
         )
     if not os.path.isfile(path):
         raise RuntimeError(f"'{env_var}' points to a file that does not exist: {path}")
-    size_bytes = os.path.getsize(path)
     with open(path, "r") as f:
-        return json.load(f), size_bytes, f"env_file:{env_var}"
+        content = f.read()
+    return content, os.path.getsize(path), f"env_file:{env_var}"
 
 
 def main():
@@ -93,7 +94,7 @@ def main():
             result[name] = value
             result[f"{name}_size_bytes"] = size_bytes
             result[f"{name}_source"] = source
-    except (RuntimeError, json.JSONDecodeError) as e:
+    except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
